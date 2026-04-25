@@ -1,8 +1,10 @@
 import { cache } from 'react'
 import type { Event, EventQuery } from '@/lib/types'
 import { EventbriteSource } from './eventbrite'
+import { MockSource } from './mock'
 
 const sources = [
+  new MockSource(),
   new EventbriteSource(process.env.EVENTBRITE_TOKEN ?? ''),
 ]
 
