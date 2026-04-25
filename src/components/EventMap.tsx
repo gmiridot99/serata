@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 import { Event, EventCategory } from '@/lib/types'
 
 type Props = {
@@ -18,95 +18,54 @@ const CATEGORY_COLORS: Record<EventCategory, string> = {
   other: '#6b7280',
 }
 
+const DARK_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#a0a0b0' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d0d1a' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a4a' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0d0d1a' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+]
+
 export default function EventMap({ events, highlightedId, onPinClick, className }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markersRef = useRef<any[]>([])
+  const mappableEvents = events.filter((e) => e.venue.lat !== 0 || e.venue.lng !== 0)
 
-  // Initialize map once
-  useEffect(() => {
-    if (!containerRef.current) return
+  const defaultCenter =
+    mappableEvents.length > 0
+      ? { lat: mappableEvents[0].venue.lat, lng: mappableEvents[0].venue.lng }
+      : { lat: 42, lng: 12.5 }
 
-    import('leaflet').then((mod) => {
-      const L = mod.default ?? mod
-
-      if (mapRef.current) return // already initialized
-
-      const map = L.map(containerRef.current!)
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-      }).addTo(map)
-
-      // Default view; fitBounds will fire in markers effect once events load
-      map.setView([42, 12.5], 6)
-
-      mapRef.current = map
-    })
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-        markersRef.current = []
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Update markers when events or highlightedId change
-  useEffect(() => {
-    if (!mapRef.current) return
-
-    import('leaflet').then((mod) => {
-      const L = mod.default ?? mod
-      const map = mapRef.current
-      if (!map) return
-
-      // Remove old markers
-      for (const marker of markersRef.current) {
-        marker.remove()
-      }
-      markersRef.current = []
-
-      // Only render markers for events with valid coordinates
-      const mappableEvents = events.filter(
-        (e) => e.venue.lat !== 0 || e.venue.lng !== 0
-      )
-
-      // Add new markers
-      for (const event of mappableEvents) {
-        const isHighlighted = event.id === highlightedId
-        const marker = L.circleMarker([event.venue.lat, event.venue.lng], {
-          radius: isHighlighted ? 12 : 8,
-          fillColor: CATEGORY_COLORS[event.category],
-          color: isHighlighted ? '#ffffff' : CATEGORY_COLORS[event.category],
-          weight: isHighlighted ? 2 : 1,
-          fillOpacity: 0.9,
-        }).addTo(map)
-
-        marker.on('click', () => onPinClick?.(event.id))
-        markersRef.current.push(marker)
-      }
-
-      // Fit bounds to mappable events, fallback to Italy view
-      if (mappableEvents.length > 0) {
-        const bounds = L.latLngBounds(
-          mappableEvents.map((e) => [e.venue.lat, e.venue.lng])
-        )
-        map.fitBounds(bounds)
-      } else {
-        map.setView([42, 12.5], 6)
-      }
-    })
-  }, [events, highlightedId, onPinClick])
+  const defaultZoom = mappableEvents.length > 0 ? 12 : 6
 
   return (
     <div
-      ref={containerRef}
       className={`w-full h-full${className ? ` ${className}` : ''}`}
-    />
+      style={{ height: '100%', minHeight: '400px' }}
+    >
+      <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
+        <Map
+          defaultCenter={defaultCenter}
+          defaultZoom={defaultZoom}
+          styles={DARK_STYLE}
+          disableDefaultUI={false}
+          style={{ width: '100%', height: '100%' }}
+        >
+          {mappableEvents.map((event) => {
+            const isHighlighted = event.id === highlightedId
+            const bgColor = isHighlighted ? '#e94560' : CATEGORY_COLORS[event.category]
+            return (
+              <AdvancedMarker
+                key={event.id}
+                position={{ lat: event.venue.lat, lng: event.venue.lng }}
+                onClick={() => onPinClick?.(event.id)}
+                style={isHighlighted ? { transform: 'scale(1.3)', zIndex: 10 } : undefined}
+              >
+                <Pin background={bgColor} borderColor={bgColor} glyphColor="#ffffff" />
+              </AdvancedMarker>
+            )
+          })}
+        </Map>
+      </APIProvider>
+    </div>
   )
 }

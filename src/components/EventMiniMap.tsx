@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 
 type Venue = {
   name: string
@@ -14,56 +14,35 @@ type Props = {
   className?: string
 }
 
+const DARK_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#a0a0b0' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d0d1a' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a4a' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0d0d1a' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+]
+
 export default function EventMiniMap({ venue, className }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null)
-
-  useEffect(() => {
-    if (!containerRef.current) return
-    if (venue.lat === 0 && venue.lng === 0) return
-
-    import('leaflet').then((mod) => {
-      const L = mod.default ?? mod
-
-      if (mapRef.current) return // already initialized
-
-      const map = L.map(containerRef.current!, { zoomControl: true })
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-      }).addTo(map)
-
-      map.setView([venue.lat, venue.lng], 15)
-
-      L.circleMarker([venue.lat, venue.lng], {
-        radius: 10,
-        fillColor: '#e94560',
-        color: '#e94560',
-        weight: 2,
-        fillOpacity: 0.9,
-      })
-        .bindPopup(venue.name)
-        .addTo(map)
-
-      mapRef.current = map
-    })
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   if (venue.lat === 0 && venue.lng === 0) return null
 
   return (
     <div
-      ref={containerRef}
       className={`h-64 w-full rounded-xl overflow-hidden${className ? ` ${className}` : ''}`}
-    />
+      style={{ minHeight: '256px' }}
+    >
+      <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
+        <Map
+          defaultCenter={{ lat: venue.lat, lng: venue.lng }}
+          defaultZoom={15}
+          styles={DARK_STYLE}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <AdvancedMarker position={{ lat: venue.lat, lng: venue.lng }}>
+            <Pin background="#e94560" borderColor="#e94560" glyphColor="#ffffff" />
+          </AdvancedMarker>
+        </Map>
+      </APIProvider>
+    </div>
   )
 }

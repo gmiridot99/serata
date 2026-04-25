@@ -75,7 +75,7 @@ export default function SplitView({ events, highlightedId, onCardHover, onPinCli
             onCardHover={onCardHover}
           />
         </div>
-        <div className="w-1/2 h-screen sticky top-0">
+        <div className="w-1/2 h-screen sticky top-0 overflow-hidden" style={{ height: '100vh' }}>
           <EventMap
             events={events}
             highlightedId={highlightedId}
