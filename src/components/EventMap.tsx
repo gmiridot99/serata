@@ -40,12 +40,8 @@ export default function EventMap({ events, highlightedId, onPinClick, className 
         attribution: '© OpenStreetMap contributors',
       }).addTo(map)
 
-      if (events.length === 0) {
-        map.setView([42, 12.5], 6)
-      } else {
-        const bounds = L.latLngBounds(events.map((e) => [e.venue.lat, e.venue.lng]))
-        map.fitBounds(bounds)
-      }
+      // Default view; fitBounds will fire in markers effect once events load
+      map.setView([42, 12.5], 6)
 
       mapRef.current = map
     })
@@ -75,8 +71,13 @@ export default function EventMap({ events, highlightedId, onPinClick, className 
       }
       markersRef.current = []
 
+      // Only render markers for events with valid coordinates
+      const mappableEvents = events.filter(
+        (e) => e.venue.lat !== 0 || e.venue.lng !== 0
+      )
+
       // Add new markers
-      for (const event of events) {
+      for (const event of mappableEvents) {
         const isHighlighted = event.id === highlightedId
         const marker = L.circleMarker([event.venue.lat, event.venue.lng], {
           radius: isHighlighted ? 12 : 8,
@@ -88,6 +89,16 @@ export default function EventMap({ events, highlightedId, onPinClick, className 
 
         marker.on('click', () => onPinClick?.(event.id))
         markersRef.current.push(marker)
+      }
+
+      // Fit bounds to mappable events, fallback to Italy view
+      if (mappableEvents.length > 0) {
+        const bounds = L.latLngBounds(
+          mappableEvents.map((e) => [e.venue.lat, e.venue.lng])
+        )
+        map.fitBounds(bounds)
+      } else {
+        map.setView([42, 12.5], 6)
       }
     })
   }, [events, highlightedId, onPinClick])

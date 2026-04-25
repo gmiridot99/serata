@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type { Event, EventQuery } from '@/lib/types'
 import { EventbriteSource } from './eventbrite'
 
@@ -12,7 +13,7 @@ export async function fetchEvents(query: EventQuery): Promise<Event[]> {
     .flatMap(r => r.value)
 }
 
-export async function fetchEventById(id: string): Promise<Event | null> {
+export const fetchEventById = cache(async (id: string): Promise<Event | null> => {
   for (const source of sources) {
     if (!source.fetchById) continue
     try {
@@ -23,4 +24,4 @@ export async function fetchEventById(id: string): Promise<Event | null> {
     }
   }
   return null
-}
+})

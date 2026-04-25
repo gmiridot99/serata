@@ -1,16 +1,18 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { fetchEventById } from '@/lib/sources'
 import { Event, EventPrice } from '@/lib/types'
 import type { Metadata } from 'next'
+
+const EventMiniMap = dynamic(() => import('@/components/EventMiniMap'), { ssr: false })
 
 type Props = {
   params: Promise<{ city: string; id: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { city, id } = await params
-  void city
+  const { id } = await params
   const event = await fetchEventById(id)
   if (!event) return {}
   return {
@@ -108,14 +110,27 @@ export default async function EventDetailPage({ params }: Props) {
         {/* Description */}
         <p className="text-text-muted mt-6 leading-relaxed">{event.description}</p>
 
-        {/* Venue placeholder (mini-map) */}
-        <div className="bg-bg-card rounded-xl p-4 mt-6 flex items-center gap-3">
-          <span className="text-2xl">📍</span>
-          <div>
-            <p className="text-text font-medium">{event.venue.name}</p>
-            <p className="text-text-muted text-sm">{event.venue.address}</p>
+        {/* Venue mini-map */}
+        {(event.venue.lat !== 0 || event.venue.lng !== 0) ? (
+          <div className="mt-6">
+            <EventMiniMap venue={event.venue} />
+            <div className="bg-bg-card rounded-b-xl px-4 py-3 flex items-center gap-3">
+              <span className="text-2xl">📍</span>
+              <div>
+                <p className="text-text font-medium">{event.venue.name}</p>
+                <p className="text-text-muted text-sm">{event.venue.address}</p>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-bg-card rounded-xl p-4 mt-6 flex items-center gap-3">
+            <span className="text-2xl">📍</span>
+            <div>
+              <p className="text-text font-medium">{event.venue.name}</p>
+              <p className="text-text-muted text-sm">{event.venue.address}</p>
+            </div>
+          </div>
+        )}
 
         {/* CTA */}
         <a

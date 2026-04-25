@@ -23,6 +23,7 @@ type EbEvent = {
   is_free: boolean
   ticket_availability?: {
     minimum_ticket_price?: { value: number; currency: string }
+    maximum_ticket_price?: { value: number; currency: string }
   }
   logo?: { url: string }
   url: string
@@ -54,8 +55,12 @@ export function normalizeEvent(raw: EbEvent): Event {
       ? 'free'
       : {
           min: raw.ticket_availability?.minimum_ticket_price?.value ?? 0,
-          max: raw.ticket_availability?.minimum_ticket_price?.value ?? 0,
-          currency: raw.ticket_availability?.minimum_ticket_price?.currency ?? 'EUR',
+          max:
+            raw.ticket_availability?.maximum_ticket_price?.value ??
+            raw.ticket_availability?.minimum_ticket_price?.value ??
+            0,
+          currency:
+            raw.ticket_availability?.minimum_ticket_price?.currency ?? 'EUR',
         },
     imageUrl: raw.logo?.url,
     ticketUrl: raw.url,

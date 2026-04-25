@@ -1,66 +1,55 @@
-'use client'
-
-import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import FilterBar from '@/components/FilterBar'
-import SplitView from '@/components/SplitView'
-import { Event, EventCategory } from '@/lib/types'
+import { fetchEvents } from '@/lib/sources'
+import { EventCategory, EventQuery } from '@/lib/types'
+import CityPageClient from '@/components/CityPageClient'
 
-type Filters = {
-  date?: 'today' | 'weekend'
-  categories: EventCategory[]
-  free: boolean
+const VALID_CATEGORIES = new Set<EventCategory>([
+  'club',
+  'concert',
+  'aperitivo',
+  'theatre',
+  'other',
+])
+
+function isValidCategory(value: string): value is EventCategory {
+  return VALID_CATEGORIES.has(value as EventCategory)
 }
 
 type Props = {
   params: Promise<{ city: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default function CityPage({ params }: Props) {
-  const { city } = use(params)
+export default async function CityPage({ params, searchParams }: Props) {
+  const { city } = await params
   const decodedCity = decodeURIComponent(city)
+  const sp = await searchParams
 
-  const [filters, setFilters] = useState<Filters>({
-    date: undefined,
-    categories: [],
-    free: false,
-  })
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-  const [highlightedId, setHighlightedId] = useState<string | null>(null)
+  const dateParam = typeof sp.date === 'string' ? sp.date : undefined
+  const date =
+    dateParam === 'today' || dateParam === 'weekend' ? dateParam : undefined
 
-  useEffect(() => {
-    let cancelled = false
+  const categoryParam = typeof sp.category === 'string' ? sp.category : undefined
+  const categories: EventCategory[] = categoryParam
+    ? categoryParam.split(',').filter(isValidCategory)
+    : []
 
-    async function loadEvents() {
-      setLoading(true)
-      const sp = new URLSearchParams({ city: decodedCity })
-      if (filters.date) sp.set('date', filters.date)
-      if (filters.categories.length > 0)
-        sp.set('category', filters.categories.join(','))
-      if (filters.free) sp.set('free', 'true')
+  const free = sp.free === 'true'
 
-      try {
-        const data: Event[] = await fetch(`/api/events?${sp}`).then((r) =>
-          r.json()
-        )
-        if (!cancelled) setEvents(data)
-      } catch {
-        if (!cancelled) setEvents([])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    loadEvents()
-    return () => {
-      cancelled = true
-    }
-  }, [decodedCity, filters.date, filters.free, filters.categories])
-
-  function handlePinClick(id: string) {
-    setHighlightedId(id)
+  const query: EventQuery = {
+    city: decodedCity,
+    date,
+    category: categories.length > 0 ? categories : undefined,
+    free,
   }
+
+  const initialFilters: { date?: 'today' | 'weekend'; categories: EventCategory[]; free: boolean } = {
+    date,
+    categories,
+    free,
+  }
+
+  const events = await fetchEvents(query)
 
   return (
     <div className="min-h-screen bg-bg">
@@ -77,36 +66,11 @@ export default function CityPage({ params }: Props) {
         </h1>
       </header>
 
-      {/* Filter Bar */}
-      <div className="px-4 pb-4 max-w-5xl mx-auto">
-        <FilterBar activeFilters={filters} onChange={setFilters} />
-      </div>
-
-      {/* Results count */}
-      <div className="px-4 pb-3 max-w-5xl mx-auto">
-        {loading ? (
-          <p className="text-text-muted text-sm">Caricamento...</p>
-        ) : (
-          <p className="text-text-muted text-sm">
-            {events.length} event{events.length === 1 ? 'o' : 'i'} a{' '}
-            {decodedCity}
-          </p>
-        )}
-      </div>
-
-      {/* Split View */}
-      {loading ? (
-        <div className="flex items-center justify-center py-24">
-          <span className="text-text-muted text-lg">Caricamento...</span>
-        </div>
-      ) : (
-        <SplitView
-          events={events}
-          highlightedId={highlightedId}
-          onCardHover={setHighlightedId}
-          onPinClick={handlePinClick}
-        />
-      )}
+      <CityPageClient
+        events={events}
+        city={decodedCity}
+        initialFilters={initialFilters}
+      />
     </div>
   )
 }

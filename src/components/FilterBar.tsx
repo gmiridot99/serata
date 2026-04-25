@@ -55,7 +55,7 @@ export default function FilterBar({ activeFilters, onChange }: Props) {
   }
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
       {PILLS.map((pill) => (
         <button
           key={pill.label}
