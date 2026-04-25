@@ -33,6 +33,7 @@ export default function EventMiniMap({ venue, className }: Props) {
     >
       <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
         <Map
+          mapId="DEMO_MAP_ID"
           defaultCenter={{ lat: venue.lat, lng: venue.lng }}
           defaultZoom={15}
           styles={DARK_STYLE}

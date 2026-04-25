@@ -44,6 +44,7 @@ export default function EventMap({ events, highlightedId, onPinClick, className 
     >
       <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
         <Map
+          mapId="DEMO_MAP_ID"
           defaultCenter={defaultCenter}
           defaultZoom={defaultZoom}
           styles={DARK_STYLE}
