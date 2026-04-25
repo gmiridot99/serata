@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
       query.free = true
     }
 
+    const q = searchParams.get('q')
+    if (q && q.trim()) {
+      query.q = q.trim()
+    }
+
     const events = await fetchEvents(query)
     return NextResponse.json(events)
   } catch {

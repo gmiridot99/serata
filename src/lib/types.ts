@@ -29,6 +29,7 @@ export type EventQuery = {
   category?: EventCategory | EventCategory[]
   date?: 'today' | 'weekend'
   free?: boolean
+  q?: string   // keyword search (es. "cocktail bar", "discoteca techno")
 }
 
 export interface EventSource {
