@@ -2,9 +2,11 @@ import { cache } from 'react'
 import type { Event, EventQuery } from '@/lib/types'
 import { EventbriteSource } from './eventbrite'
 import { MockSource } from './mock'
+import { TicketmasterSource } from './ticketmaster'
 
 const sources = [
   new MockSource(),
+  new TicketmasterSource(process.env.TICKETMASTER_API_KEY ?? ''),
   new EventbriteSource(process.env.EVENTBRITE_TOKEN ?? ''),
 ]
 
