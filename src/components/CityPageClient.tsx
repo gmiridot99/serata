@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import FilterBar from '@/components/FilterBar'
+import KeywordSearch from '@/components/KeywordSearch'
 import SplitView from '@/components/SplitView'
-import { Event, EventCategory } from '@/lib/types'
+import { Event } from '@/lib/types'
 
 type Filters = {
   date?: 'today' | 'weekend'
-  categories: EventCategory[]
+  q?: string
   free: boolean
 }
 
@@ -22,27 +23,43 @@ export default function CityPageClient({ events, city, initialFilters }: Props) 
   const router = useRouter()
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
 
-  function handleFilterChange(filters: Filters) {
+  function buildUrl(filters: Filters) {
     const sp = new URLSearchParams()
     if (filters.date) sp.set('date', filters.date)
-    if (filters.categories.length > 0) sp.set('category', filters.categories.join(','))
+    if (filters.q && filters.q.trim()) sp.set('q', filters.q.trim())
     if (filters.free) sp.set('free', 'true')
     const qs = sp.toString()
-    router.push(`/${encodeURIComponent(city)}${qs ? `?${qs}` : ''}`)
+    return `/${encodeURIComponent(city)}${qs ? `?${qs}` : ''}`
   }
+
+  function handleFilterChange(filters: Filters) {
+    router.push(buildUrl(filters))
+  }
+
+  function handleKeyword(q: string) {
+    router.push(buildUrl({ ...initialFilters, q }))
+  }
+
+  const isVenueMode = Boolean(initialFilters.q)
+  const label = isVenueMode
+    ? `${events.length} local${events.length === 1 ? 'e' : 'i'} a ${city}`
+    : `${events.length} event${events.length === 1 ? 'o' : 'i'} a ${city}`
 
   return (
     <>
-      {/* Filter Bar */}
+      {/* Keyword search */}
+      <div className="px-4 pb-3 max-w-5xl mx-auto">
+        <KeywordSearch value={initialFilters.q ?? ''} onChange={handleKeyword} />
+      </div>
+
+      {/* Filter pills */}
       <div className="px-4 pb-4 max-w-5xl mx-auto">
         <FilterBar activeFilters={initialFilters} onChange={handleFilterChange} />
       </div>
 
       {/* Results count */}
       <div className="px-4 pb-3 max-w-5xl mx-auto">
-        <p className="text-text-muted text-sm">
-          {events.length} event{events.length === 1 ? 'o' : 'i'} a {city}
-        </p>
+        <p className="text-text-muted text-sm">{label}</p>
       </div>
 
       {/* Split View */}
