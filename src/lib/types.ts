@@ -33,4 +33,5 @@ export type EventQuery = {
 
 export interface EventSource {
   fetch(query: EventQuery): Promise<Event[]>
+  fetchById?(id: string): Promise<Event | null>
 }

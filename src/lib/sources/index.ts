@@ -13,10 +13,14 @@ export async function fetchEvents(query: EventQuery): Promise<Event[]> {
 }
 
 export async function fetchEventById(id: string): Promise<Event | null> {
-  const eb = new EventbriteSource(process.env.EVENTBRITE_TOKEN ?? '')
-  try {
-    return await eb.fetchById(id)
-  } catch {
-    return null
+  for (const source of sources) {
+    if (!source.fetchById) continue
+    try {
+      const event = await source.fetchById(id)
+      if (event) return event
+    } catch {
+      // try next source
+    }
   }
+  return null
 }

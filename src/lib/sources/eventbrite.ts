@@ -127,7 +127,7 @@ export class EventbriteSource implements EventSource {
     return (data.events ?? []).map(normalizeEvent)
   }
 
-  async fetchById(id: string): Promise<Event> {
+  async fetchById(id: string): Promise<Event | null> {
     const res = await fetch(
       `https://www.eventbriteapi.com/v3/events/${id}/?expand=venue,logo,ticket_availability`,
       { headers: { Authorization: `Bearer ${this.token}` } }

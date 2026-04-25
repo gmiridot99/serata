@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { fetchEvents } from '@/lib/sources'
 import type { EventCategory, EventQuery } from '@/lib/types'
 
@@ -10,9 +10,9 @@ function isValidCategory(v: string): v is EventCategory {
   return VALID_CATEGORIES.has(v as EventCategory)
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
 
     const city = searchParams.get('city')
     if (!city) {
