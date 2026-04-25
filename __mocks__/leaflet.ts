@@ -1,13 +1,18 @@
+const mapInstance = {
+  setView: () => mapInstance,
+  on: () => mapInstance,
+  remove: () => {},
+  fitBounds: () => mapInstance,
+}
+
 const L = {
-  map: () => ({
-    setView: () => ({ on: () => {} }),
-    remove: () => {},
-  }),
+  map: () => mapInstance,
   tileLayer: () => ({ addTo: () => {} }),
   circleMarker: () => ({
     addTo: () => ({ bindPopup: () => ({ on: () => {} }) }),
     remove: () => {},
     setStyle: () => {},
   }),
+  latLngBounds: () => ({}),
 }
 export default L
