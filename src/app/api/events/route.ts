@@ -1,3 +1,4 @@
+// src/app/api/events/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchEvents } from '@/lib/sources'
 import type { EventCategory, EventQuery } from '@/lib/types'
@@ -8,6 +9,10 @@ const VALID_CATEGORIES = new Set<EventCategory>([
 
 function isValidCategory(v: string): v is EventCategory {
   return VALID_CATEGORIES.has(v as EventCategory)
+}
+
+function isValidDate(v: string): boolean {
+  return v === 'today' || v === 'weekend' || /^\d{4}-\d{2}-\d{2}$/.test(v)
 }
 
 export async function GET(request: NextRequest) {
@@ -21,29 +26,39 @@ export async function GET(request: NextRequest) {
 
     const query: EventQuery = { city }
 
+    const latParam = searchParams.get('lat')
+    const lngParam = searchParams.get('lng')
+    if (latParam && lngParam) {
+      query.lat = parseFloat(latParam)
+      query.lng = parseFloat(lngParam)
+      const radiusParam = searchParams.get('radius')
+      if (radiusParam) query.radiusKm = Math.max(1, parseInt(radiusParam, 10))
+    }
+
+    const modeParam = searchParams.get('mode')
+    if (modeParam === 'events' || modeParam === 'venues') {
+      query.mode = modeParam
+    }
+
     const categoryParam = searchParams.get('category')
     if (categoryParam) {
       const parts = categoryParam.split(',').map(s => s.trim()).filter(Boolean)
       const categories = parts.filter(isValidCategory)
-      if (categories.length === 1) {
-        query.category = categories[0]
-      } else if (categories.length > 1) {
-        query.category = categories
-      }
+      if (categories.length === 1) query.category = categories[0]
+      else if (categories.length > 1) query.category = categories
     }
 
     const dateParam = searchParams.get('date')
-    if (dateParam === 'today' || dateParam === 'weekend') {
+    if (dateParam && isValidDate(dateParam)) {
       query.date = dateParam
     }
 
-    const freeParam = searchParams.get('free')
-    if (freeParam === 'true') {
+    if (searchParams.get('free') === 'true') {
       query.free = true
     }
 
     const q = searchParams.get('q')
-    if (q && q.trim()) {
+    if (q?.trim()) {
       query.q = q.trim()
     }
 
