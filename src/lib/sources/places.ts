@@ -51,7 +51,7 @@ export function normalizePlaceToEvent(place: GooglePlace, apiKey: string): Event
     id: `places_${place.id}`,
     title: place.displayName.text,
     description: place.formattedAddress,
-    category: mapCategory(place.types),
+    category: mapCategory(place.types ?? []),
     date: new Date().toISOString(),
     startTime: '',
     venue: {

@@ -41,7 +41,7 @@
 **Files:**
 - Modify: `src/lib/sources/index.ts`
 
-- [ ] **Replace the sources array** — remove `EventbriteSource` import and usage:
+- [x] **Replace the sources array** — remove `EventbriteSource` import and usage:
 
 ```ts
 // src/lib/sources/index.ts
@@ -86,7 +86,7 @@ export const fetchEventById = cache(async (id: string): Promise<Event | null> =>
 })
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/lib/sources/index.ts
@@ -100,7 +100,7 @@ git commit -m "fix: remove broken Eventbrite source (API deprecated)"
 **Files:**
 - Modify: `src/app/globals.css`
 
-- [ ] **Append keyframes and theme tokens** at the end of the file:
+- [x] **Append keyframes and theme tokens** at the end of the file:
 
 ```css
 @keyframes slideUp {
@@ -121,7 +121,7 @@ git commit -m "fix: remove broken Eventbrite source (API deprecated)"
 
 This makes `animate-slide-up` and `animate-slide-right` available as Tailwind utility classes.
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/app/globals.css
@@ -135,7 +135,7 @@ git commit -m "feat: add slide-up and slide-right animation utilities"
 **Files:**
 - Create: `src/app/api/geocode/route.ts`
 
-- [ ] **Create the file**:
+- [x] **Create the file**:
 
 ```ts
 // src/app/api/geocode/route.ts
@@ -175,11 +175,11 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-- [ ] **Manual smoke test** — start the dev server (`npm run dev`) and visit:
+- [x] **Manual smoke test** — start the dev server (`npm run dev`) and visit:
   `http://localhost:3000/api/geocode?lat=45.46&lng=9.18`
   Expected response: `{"city":"Milan"}` or `{"city":"Milano"}` (depends on locale returned by Google)
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/app/api/geocode/route.ts
@@ -193,7 +193,7 @@ git commit -m "feat: add /api/geocode reverse geocoding route"
 **Files:**
 - Create: `src/hooks/useAppState.ts`
 
-- [ ] **Create the hook**:
+- [x] **Create the hook**:
 
 ```ts
 // src/hooks/useAppState.ts
@@ -362,7 +362,7 @@ export function useAppState(): AppState {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/hooks/useAppState.ts
@@ -376,7 +376,7 @@ git commit -m "feat: add useAppState hook with geolocation and event fetching"
 **Files:**
 - Create: `src/components/EmptyState.tsx`
 
-- [ ] **Create the file**:
+- [x] **Create the file**:
 
 ```tsx
 // src/components/EmptyState.tsx
@@ -400,7 +400,7 @@ export default function EmptyState({ onCitySelect: _onCitySelect }: Props) {
 
 Note: the CitySearchBar is already in the header — EmptyState only shows the prompt message. `onCitySelect` is kept in props for future use (e.g. a secondary search input).
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/EmptyState.tsx
@@ -416,7 +416,7 @@ git commit -m "feat: add EmptyState component for no-city state"
 
 This component uses `useMapsLibrary('places')` from `@vis.gl/react-google-maps` to attach Google Places Autocomplete to the input. It must be rendered inside an `<APIProvider>` (provided by `AppClient`).
 
-- [ ] **Create the file**:
+- [x] **Create the file**:
 
 ```tsx
 // src/components/CitySearchBar.tsx
@@ -504,7 +504,7 @@ export default function CitySearchBar({ value, onCitySelect }: Props) {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/CitySearchBar.tsx
@@ -518,7 +518,7 @@ git commit -m "feat: add CitySearchBar with Google Places Autocomplete"
 **Files:**
 - Modify: `src/components/EventCard.tsx`
 
-- [ ] **Add `onClick` prop** — add to the `Props` type and the root `<div>`:
+- [x] **Add `onClick` prop** — add to the `Props` type and the root `<div>`:
 
 ```tsx
 // src/components/EventCard.tsx
@@ -607,7 +607,7 @@ export default function EventCard({ event, highlighted, onHover, onHoverEnd, onC
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/EventCard.tsx
@@ -621,7 +621,7 @@ git commit -m "feat: add onClick prop to EventCard"
 **Files:**
 - Modify: `src/components/EventGrid.tsx`
 
-- [ ] **Add `onSelect` prop**, pass to each `EventCard` as `onClick`:
+- [x] **Add `onSelect` prop**, pass to each `EventCard` as `onClick`:
 
 ```tsx
 // src/components/EventGrid.tsx
@@ -663,7 +663,7 @@ export default function EventGrid({ events, highlightedId, onCardHover, onSelect
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/EventGrid.tsx
@@ -679,7 +679,7 @@ git commit -m "feat: add onSelect prop to EventGrid"
 
 `APIProvider` moves to `AppClient` — remove it here. Also replace `onPinClick(id)` with `onSelect(event)` so pin clicks open the modal.
 
-- [ ] **Rewrite the file**:
+- [x] **Rewrite the file**:
 
 ```tsx
 // src/components/EventMap.tsx
@@ -755,7 +755,7 @@ export default function EventMap({ events, highlightedId, onSelect, className }:
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/EventMap.tsx
@@ -771,7 +771,7 @@ git commit -m "refactor: remove APIProvider from EventMap, pin click opens modal
 
 `APIProvider` is now an ancestor via `AppClient`. Remove the wrapper here.
 
-- [ ] **Rewrite the file**:
+- [x] **Rewrite the file**:
 
 ```tsx
 // src/components/EventMiniMap.tsx
@@ -823,7 +823,7 @@ export default function EventMiniMap({ venue, className }: Props) {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/EventMiniMap.tsx
@@ -837,7 +837,7 @@ git commit -m "refactor: remove APIProvider from EventMiniMap"
 **Files:**
 - Modify: `src/components/SplitView.tsx`
 
-- [ ] **Rewrite the file**:
+- [x] **Rewrite the file**:
 
 ```tsx
 // src/components/SplitView.tsx
@@ -942,7 +942,7 @@ export default function SplitView({ events, loading, highlightedId, onCardHover,
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/SplitView.tsx
@@ -956,7 +956,7 @@ git commit -m "refactor: SplitView accepts onSelect(Event) and loading prop"
 **Files:**
 - Create: `src/components/EventDetailModal.tsx`
 
-- [ ] **Create the file**:
+- [x] **Create the file**:
 
 ```tsx
 // src/components/EventDetailModal.tsx
@@ -1124,7 +1124,7 @@ export default function EventDetailModal({ event, onClose }: Props) {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/EventDetailModal.tsx
@@ -1140,7 +1140,7 @@ git commit -m "feat: add EventDetailModal slide-over/bottom-sheet component"
 
 `AppClient` is the root client component. It moves `APIProvider` here (previously in `EventMap` and `EventMiniMap`), wraps `useAppState` in a `<Suspense>` (required by `useSearchParams`), and composes all UI sections.
 
-- [ ] **Create the file**:
+- [x] **Create the file**:
 
 ```tsx
 // src/components/AppClient.tsx
@@ -1229,7 +1229,7 @@ export default function AppClient() {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/components/AppClient.tsx
@@ -1243,7 +1243,7 @@ git commit -m "feat: add AppClient root component with geolocation and modal"
 **Files:**
 - Modify: `src/app/page.tsx`
 
-- [ ] **Replace entire file**:
+- [x] **Replace entire file**:
 
 ```tsx
 // src/app/page.tsx
@@ -1254,7 +1254,7 @@ export default function Home() {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add src/app/page.tsx

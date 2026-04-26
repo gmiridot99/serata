@@ -65,6 +65,7 @@ export default function CityPageClient({ events, city, initialFilters }: Props) 
       {/* Split View */}
       <SplitView
         events={events}
+        loading={false}
         highlightedId={highlightedId}
         onCardHover={setHighlightedId}
         onSelect={(event) => setHighlightedId(event.id)}
