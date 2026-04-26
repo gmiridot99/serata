@@ -1,6 +1,5 @@
 import { cache } from 'react'
 import type { Event, EventQuery } from '@/lib/types'
-import { EventbriteSource } from './eventbrite'
 import { MockSource } from './mock'
 import { TicketmasterSource } from './ticketmaster'
 import { PlacesSource } from './places'
@@ -8,7 +7,6 @@ import { PlacesSource } from './places'
 const eventSources = [
   new MockSource(),
   new TicketmasterSource(process.env.TICKETMASTER_API_KEY ?? ''),
-  new EventbriteSource(process.env.EVENTBRITE_TOKEN ?? ''),
 ]
 
 const placesSource = new PlacesSource(process.env.GOOGLE_PLACES_API_KEY ?? '')
