@@ -81,6 +81,23 @@ export class PlacesSource implements EventSource {
     if (!query.q) return []
 
     const textQuery = `${query.q} ${query.city}`
+
+    const requestBody: Record<string, unknown> = {
+      textQuery,
+      languageCode: 'it',
+      regionCode: 'IT',
+      maxResultCount: 20,
+    }
+
+    if (query.lat !== undefined && query.lng !== undefined) {
+      requestBody.locationBias = {
+        circle: {
+          center: { latitude: query.lat, longitude: query.lng },
+          radius: (query.radiusKm ?? 10) * 1000,
+        },
+      }
+    }
+
     const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: {
@@ -88,12 +105,7 @@ export class PlacesSource implements EventSource {
         'X-Goog-Api-Key': this.apiKey,
         'X-Goog-FieldMask': FIELDS,
       },
-      body: JSON.stringify({
-        textQuery,
-        languageCode: 'it',
-        regionCode: 'IT',
-        maxResultCount: 20,
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!res.ok) throw new Error(`Places API error: ${res.status}`)
@@ -107,13 +119,13 @@ export class PlacesSource implements EventSource {
       results = results.filter((e) => e.price === 'free')
     }
 
-    const categories = Array.isArray(query.category)
+    const cats = Array.isArray(query.category)
       ? query.category
       : query.category
       ? [query.category]
       : []
-    if (categories.length > 0) {
-      results = results.filter((e) => categories.includes(e.category))
+    if (cats.length > 0) {
+      results = results.filter((e) => cats.includes(e.category))
     }
 
     return results
