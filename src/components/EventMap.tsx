@@ -1,12 +1,12 @@
 'use client'
 
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 import { Event, EventCategory } from '@/lib/types'
 
 type Props = {
   events: Event[]
   highlightedId?: string | null
-  onPinClick?: (id: string) => void
+  onSelect?: (event: Event) => void
   className?: string
 }
 
@@ -27,7 +27,7 @@ const DARK_STYLE = [
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
 ]
 
-export default function EventMap({ events, highlightedId, onPinClick, className }: Props) {
+export default function EventMap({ events, highlightedId, onSelect, className }: Props) {
   const mappableEvents = events.filter((e) => e.venue.lat !== 0 || e.venue.lng !== 0)
 
   const defaultCenter =
@@ -42,31 +42,29 @@ export default function EventMap({ events, highlightedId, onPinClick, className 
       className={`w-full h-full${className ? ` ${className}` : ''}`}
       style={{ height: '100%', minHeight: '400px' }}
     >
-      <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
-        <Map
-          mapId="DEMO_MAP_ID"
-          defaultCenter={defaultCenter}
-          defaultZoom={defaultZoom}
-          styles={DARK_STYLE}
-          disableDefaultUI={false}
-          style={{ width: '100%', height: '100%' }}
-        >
-          {mappableEvents.map((event) => {
-            const isHighlighted = event.id === highlightedId
-            const bgColor = isHighlighted ? '#e94560' : CATEGORY_COLORS[event.category]
-            return (
-              <AdvancedMarker
-                key={event.id}
-                position={{ lat: event.venue.lat, lng: event.venue.lng }}
-                onClick={() => onPinClick?.(event.id)}
-                style={isHighlighted ? { transform: 'scale(1.3)', zIndex: 10 } : undefined}
-              >
-                <Pin background={bgColor} borderColor={bgColor} glyphColor="#ffffff" />
-              </AdvancedMarker>
-            )
-          })}
-        </Map>
-      </APIProvider>
+      <Map
+        mapId="DEMO_MAP_ID"
+        defaultCenter={defaultCenter}
+        defaultZoom={defaultZoom}
+        styles={DARK_STYLE}
+        disableDefaultUI={false}
+        style={{ width: '100%', height: '100%' }}
+      >
+        {mappableEvents.map((event) => {
+          const isHighlighted = event.id === highlightedId
+          const bgColor = isHighlighted ? '#e94560' : CATEGORY_COLORS[event.category]
+          return (
+            <AdvancedMarker
+              key={event.id}
+              position={{ lat: event.venue.lat, lng: event.venue.lng }}
+              onClick={() => onSelect?.(event)}
+              style={isHighlighted ? { transform: 'scale(1.3)', zIndex: 10 } : undefined}
+            >
+              <Pin background={bgColor} borderColor={bgColor} glyphColor="#ffffff" />
+            </AdvancedMarker>
+          )
+        })}
+      </Map>
     </div>
   )
 }

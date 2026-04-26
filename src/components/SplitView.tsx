@@ -11,12 +11,12 @@ type Props = {
   events: Event[]
   highlightedId: string | null
   onCardHover: (id: string | null) => void
-  onPinClick: (id: string) => void
+  onSelect: (event: Event) => void
 }
 
 type MobileView = 'grid' | 'map'
 
-export default function SplitView({ events, highlightedId, onCardHover, onPinClick }: Props) {
+export default function SplitView({ events, highlightedId, onCardHover, onSelect }: Props) {
   const [mobileView, setMobileView] = useState<MobileView>('grid')
 
   return (
@@ -60,7 +60,7 @@ export default function SplitView({ events, highlightedId, onCardHover, onPinCli
             <EventMap
               events={events}
               highlightedId={highlightedId}
-              onPinClick={onPinClick}
+              onSelect={onSelect}
             />
           </div>
         )}
@@ -79,7 +79,7 @@ export default function SplitView({ events, highlightedId, onCardHover, onPinCli
           <EventMap
             events={events}
             highlightedId={highlightedId}
-            onPinClick={onPinClick}
+            onSelect={onSelect}
           />
         </div>
       </div>

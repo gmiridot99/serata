@@ -67,7 +67,7 @@ export default function CityPageClient({ events, city, initialFilters }: Props) 
         events={events}
         highlightedId={highlightedId}
         onCardHover={setHighlightedId}
-        onPinClick={setHighlightedId}
+        onSelect={(event) => setHighlightedId(event.id)}
       />
     </>
   )
