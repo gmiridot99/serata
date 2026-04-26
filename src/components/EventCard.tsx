@@ -23,9 +23,10 @@ type Props = {
   highlighted?: boolean
   onHover?: () => void
   onHoverEnd?: () => void
+  onClick?: () => void
 }
 
-export default function EventCard({ event, highlighted, onHover, onHoverEnd }: Props) {
+export default function EventCard({ event, highlighted, onHover, onHoverEnd, onClick }: Props) {
   const formattedDate = new Date(event.date).toLocaleDateString('it-IT', {
     weekday: 'short',
     day: 'numeric',
@@ -45,11 +46,12 @@ export default function EventCard({ event, highlighted, onHover, onHoverEnd }: P
 
   return (
     <div
-      className={`bg-bg-card rounded-xl overflow-hidden transition-all ${
+      className={`bg-bg-card rounded-xl overflow-hidden transition-all cursor-pointer ${
         highlighted ? 'ring-2 ring-accent' : ''
       }`}
       onMouseEnter={onHover}
       onMouseLeave={onHoverEnd}
+      onClick={onClick}
     >
       {/* Image area */}
       <div className="relative aspect-video">
