@@ -137,7 +137,7 @@ All fetch logic lives in `useAppState`. Components only receive state and callba
 └──────────────────────────┴──────────────────────────────────┘
 ```
 
-When modal is open, the list narrows to make room for the slide-over on the right.
+When modal is open, it overlays the map (right half) on desktop — the list remains fully visible and scrollable. The map is covered by the modal, which is acceptable since the selected pin is already the focus.
 
 ### Mobile
 
