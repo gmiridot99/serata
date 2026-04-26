@@ -24,7 +24,7 @@ export default function LocationSearch({ value, onLocationSelect }: Props) {
     if (!placesLib || !inputRef.current) return
 
     autocompleteRef.current = new placesLib.Autocomplete(inputRef.current, {
-      types: ['(regions)'],
+      types: ['geocode', 'establishment'],
       fields: ['name', 'geometry', 'address_components', 'formatted_address'],
     })
 
