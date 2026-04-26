@@ -1,43 +1,63 @@
 // src/hooks/useAppState.ts
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { Event } from '@/lib/types'
+import type { Event, Location } from '@/lib/types'
 
 export type Filters = {
-  date?: 'today' | 'weekend'
+  mode: 'events' | 'venues'
+  date?: string       // 'today' | 'weekend' | 'YYYY-MM-DD'
   free: boolean
-  q?: string
+  q?: string          // venues mode keyword
+  radiusKm: number    // default 10
 }
 
 export type GeoStatus = 'pending' | 'granted' | 'denied'
 
 export type AppState = {
-  city: string | null
+  location: Location | null
   events: Event[]
   filters: Filters
   loading: boolean
   geoStatus: GeoStatus
   selectedEvent: Event | null
   highlightedId: string | null
-  setCity: (city: string) => void
+  setLocation: (location: Location) => void
   setFilters: (filters: Filters) => void
   setSelectedEvent: (event: Event | null) => void
   setHighlightedId: (id: string | null) => void
 }
 
-function parseFilters(params: { get: (key: string) => string | null }): Filters {
+function parseFilters(params: URLSearchParams): Filters {
+  const modeVal = params.get('mode')
   const dateVal = params.get('date')
+  const radiusVal = params.get('radius')
   return {
-    date: (dateVal === 'today' || dateVal === 'weekend') ? dateVal : undefined,
+    mode: modeVal === 'venues' ? 'venues' : 'events',
+    date: dateVal ?? undefined,
     free: params.get('free') === 'true',
     q: params.get('q') ?? undefined,
+    radiusKm: Math.max(1, parseInt(radiusVal ?? '10', 10) || 10),
   }
 }
 
-async function apiFetchEvents(city: string, filters: Filters): Promise<Event[]> {
-  const params = new URLSearchParams({ city })
+function parseLocation(params: URLSearchParams): Location | null {
+  const city = params.get('city')
+  const lat = parseFloat(params.get('lat') ?? '')
+  const lng = parseFloat(params.get('lng') ?? '')
+  if (!city || isNaN(lat) || isNaN(lng)) return null
+  return { name: city, lat, lng }
+}
+
+async function apiFetchEvents(location: Location, filters: Filters): Promise<Event[]> {
+  const params = new URLSearchParams({
+    city: location.name,
+    lat: String(location.lat),
+    lng: String(location.lng),
+    radius: String(filters.radiusKm),
+    mode: filters.mode,
+  })
   if (filters.date) params.set('date', filters.date)
   if (filters.free) params.set('free', 'true')
   if (filters.q) params.set('q', filters.q)
@@ -50,33 +70,46 @@ export function useAppState(): AppState {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [city, setCityState] = useState<string | null>(
-    searchParams.get('city') || null
+  const [location, setLocationState] = useState<Location | null>(
+    () => parseLocation(new URLSearchParams(searchParams.toString()))
   )
   const [events, setEvents] = useState<Event[]>([])
-  const [filters, setFiltersState] = useState<Filters>(parseFilters(searchParams))
+  const [filters, setFiltersState] = useState<Filters>(
+    () => parseFilters(new URLSearchParams(searchParams.toString()))
+  )
   const [loading, setLoading] = useState(false)
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('pending')
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
 
+  const locationRef = useRef(location)
+  locationRef.current = location
+  const filtersRef = useRef(filters)
+  filtersRef.current = filters
+
   const updateUrl = useCallback(
-    (newCity: string | null, newFilters: Filters) => {
+    (newLocation: Location | null, newFilters: Filters) => {
       const params = new URLSearchParams()
-      if (newCity) params.set('city', newCity)
+      if (newLocation) {
+        params.set('city', newLocation.name)
+        params.set('lat', String(newLocation.lat))
+        params.set('lng', String(newLocation.lng))
+      }
+      params.set('mode', newFilters.mode)
       if (newFilters.date) params.set('date', newFilters.date)
       if (newFilters.free) params.set('free', 'true')
       if (newFilters.q) params.set('q', newFilters.q)
+      if (newFilters.radiusKm !== 10) params.set('radius', String(newFilters.radiusKm))
       const qs = params.toString()
       router.replace(qs ? `/?${qs}` : '/', { scroll: false })
     },
     [router]
   )
 
-  const loadEvents = useCallback(async (newCity: string, newFilters: Filters) => {
+  const loadEvents = useCallback(async (loc: Location, f: Filters) => {
     setLoading(true)
     try {
-      const data = await apiFetchEvents(newCity, newFilters)
+      const data = await apiFetchEvents(loc, f)
       setEvents(data)
     } catch (err) {
       console.error('Failed to load events:', err)
@@ -86,14 +119,11 @@ export function useAppState(): AppState {
     }
   }, [])
 
-  const setCity = useCallback(
-    (newCity: string) => {
-      setCityState(newCity)
-      setFiltersState((prev) => {
-        updateUrl(newCity, prev)
-        loadEvents(newCity, prev)
-        return prev
-      })
+  const setLocation = useCallback(
+    (newLocation: Location) => {
+      setLocationState(newLocation)
+      updateUrl(newLocation, filtersRef.current)
+      loadEvents(newLocation, filtersRef.current)
     },
     [loadEvents, updateUrl]
   )
@@ -101,23 +131,20 @@ export function useAppState(): AppState {
   const setFilters = useCallback(
     (newFilters: Filters) => {
       setFiltersState(newFilters)
-      setCityState((prev) => {
-        if (prev) {
-          updateUrl(prev, newFilters)
-          loadEvents(prev, newFilters)
-        }
-        return prev
-      })
+      if (locationRef.current) {
+        updateUrl(locationRef.current, newFilters)
+        loadEvents(locationRef.current, newFilters)
+      }
     },
     [loadEvents, updateUrl]
   )
 
-  // Geolocation on mount — skip if city already in URL
+  // Geolocation on mount — skip if location already in URL
   useEffect(() => {
-    const urlCity = searchParams.get('city')
-    if (urlCity) {
+    const urlLocation = parseLocation(new URLSearchParams(searchParams.toString()))
+    if (urlLocation) {
       setGeoStatus('granted')
-      loadEvents(urlCity, parseFilters(searchParams))
+      loadEvents(urlLocation, parseFilters(new URLSearchParams(searchParams.toString())))
       return
     }
 
@@ -133,11 +160,16 @@ export function useAppState(): AppState {
             `/api/geocode?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`
           )
           const data = await res.json()
-          if (data.city) {
+          if (data.city && data.lat !== null && data.lng !== null) {
+            const newLocation: Location = {
+              name: data.city,
+              lat: data.lat,
+              lng: data.lng,
+            }
             setGeoStatus('granted')
-            setCityState(data.city)
-            updateUrl(data.city, filters)
-            loadEvents(data.city, filters)
+            setLocationState(newLocation)
+            updateUrl(newLocation, filtersRef.current)
+            loadEvents(newLocation, filtersRef.current)
           } else {
             setGeoStatus('denied')
           }
@@ -151,14 +183,14 @@ export function useAppState(): AppState {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    city,
+    location,
     events,
     filters,
     loading,
     geoStatus,
     selectedEvent,
     highlightedId,
-    setCity,
+    setLocation,
     setFilters,
     setSelectedEvent,
     setHighlightedId,
