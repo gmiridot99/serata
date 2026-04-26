@@ -11,6 +11,7 @@ const EventMap = dynamic(() => import('./EventMap'), { ssr: false })
 type Props = {
   events: Event[]
   loading: boolean
+  city?: string | null
   highlightedId: string | null
   onCardHover: (id: string | null) => void
   onSelect: (event: Event) => void
@@ -18,7 +19,7 @@ type Props = {
 
 type MobileView = 'grid' | 'map'
 
-export default function SplitView({ events, loading, highlightedId, onCardHover, onSelect }: Props) {
+export default function SplitView({ events, loading, city, highlightedId, onCardHover, onSelect }: Props) {
   const [mobileView, setMobileView] = useState<MobileView>('grid')
 
   if (loading) {
@@ -70,6 +71,7 @@ export default function SplitView({ events, loading, highlightedId, onCardHover,
           <div className="h-[calc(100vh-160px)]">
             <EventMap
               events={events}
+              city={city}
               highlightedId={highlightedId}
               onSelect={onSelect}
             />

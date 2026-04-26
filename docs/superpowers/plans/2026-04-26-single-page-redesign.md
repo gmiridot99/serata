@@ -1270,7 +1270,7 @@ git commit -m "refactor: page.tsx becomes a thin shell rendering AppClient"
 - `src/components/CitySearchWrapper.tsx`
 - `src/app/[city]/` (entire directory — contains `page.tsx` and `[id]/page.tsx`)
 
-- [ ] **Delete the files**:
+- [x] **Delete the files**:
 
 ```bash
 rm src/components/CitySearch.tsx
@@ -1278,7 +1278,7 @@ rm src/components/CitySearchWrapper.tsx
 rm -rf "src/app/[city]"
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add -A
@@ -1291,7 +1291,7 @@ git commit -m "chore: remove old city page routes and unused city search compone
 
 **Files:** none (verification only)
 
-- [ ] **Run TypeScript compiler**:
+- [x] **Run TypeScript compiler**:
 
 ```bash
 npx tsc --noEmit
@@ -1299,7 +1299,7 @@ npx tsc --noEmit
 
 Expected: zero errors. Fix any type mismatches before proceeding.
 
-- [ ] **Start dev server and verify manually**:
+- [ ] **Start dev server and verify manually** (manual step — do in browser):
 
 ```bash
 npm run dev
@@ -1316,7 +1316,7 @@ Check these flows in the browser:
 8. Change keyword filter → results update in-place
 9. Navigate to `http://localhost:3000/?city=Roma` directly → events for Roma load immediately (no geolocation needed)
 
-- [ ] **Run tests**:
+- [x] **Run tests**:
 
 ```bash
 npm test
@@ -1324,7 +1324,7 @@ npm test
 
 Expected: all existing tests pass. (No new tests added — UI components are verified manually.)
 
-- [ ] **Final commit** (if any last-minute fixes):
+- [x] **Final commit** (no fixes needed — TypeScript and tests clean):
 
 ```bash
 git add -A

@@ -5,6 +5,7 @@ import { Event, EventCategory } from '@/lib/types'
 
 type Props = {
   events: Event[]
+  city?: string | null
   highlightedId?: string | null
   onSelect?: (event: Event) => void
   className?: string
@@ -18,16 +19,8 @@ const CATEGORY_COLORS: Record<EventCategory, string> = {
   other: '#6b7280',
 }
 
-const DARK_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#a0a0b0' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d0d1a' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a4a' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0d0d1a' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-]
 
-export default function EventMap({ events, highlightedId, onSelect, className }: Props) {
+export default function EventMap({ events, city, highlightedId, onSelect, className }: Props) {
   const mappableEvents = events.filter((e) => e.venue.lat !== 0 || e.venue.lng !== 0)
 
   const defaultCenter =
@@ -43,10 +36,10 @@ export default function EventMap({ events, highlightedId, onSelect, className }:
       style={{ height: '100%', minHeight: '400px' }}
     >
       <Map
+        key={city ?? 'default'}
         mapId="DEMO_MAP_ID"
         defaultCenter={defaultCenter}
         defaultZoom={defaultZoom}
-        styles={DARK_STYLE}
         disableDefaultUI={false}
         style={{ width: '100%', height: '100%' }}
       >
