@@ -27,6 +27,15 @@ export type AppState = {
   setHighlightedId: (id: string | null) => void
 }
 
+function parseFilters(params: { get: (key: string) => string | null }): Filters {
+  const dateVal = params.get('date')
+  return {
+    date: (dateVal === 'today' || dateVal === 'weekend') ? dateVal : undefined,
+    free: params.get('free') === 'true',
+    q: params.get('q') ?? undefined,
+  }
+}
+
 async function apiFetchEvents(city: string, filters: Filters): Promise<Event[]> {
   const params = new URLSearchParams({ city })
   if (filters.date) params.set('date', filters.date)
@@ -45,11 +54,7 @@ export function useAppState(): AppState {
     searchParams.get('city') || null
   )
   const [events, setEvents] = useState<Event[]>([])
-  const [filters, setFiltersState] = useState<Filters>({
-    date: (searchParams.get('date') as 'today' | 'weekend' | null) ?? undefined,
-    free: searchParams.get('free') === 'true',
-    q: searchParams.get('q') ?? undefined,
-  })
+  const [filters, setFiltersState] = useState<Filters>(parseFilters(searchParams))
   const [loading, setLoading] = useState(false)
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('pending')
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
@@ -73,7 +78,8 @@ export function useAppState(): AppState {
     try {
       const data = await apiFetchEvents(newCity, newFilters)
       setEvents(data)
-    } catch {
+    } catch (err) {
+      console.error('Failed to load events:', err)
       setEvents([])
     } finally {
       setLoading(false)
@@ -111,11 +117,7 @@ export function useAppState(): AppState {
     const urlCity = searchParams.get('city')
     if (urlCity) {
       setGeoStatus('granted')
-      loadEvents(urlCity, {
-        date: (searchParams.get('date') as 'today' | 'weekend' | null) ?? undefined,
-        free: searchParams.get('free') === 'true',
-        q: searchParams.get('q') ?? undefined,
-      })
+      loadEvents(urlCity, parseFilters(searchParams))
       return
     }
 
