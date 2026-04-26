@@ -350,6 +350,10 @@ export class MockSource implements EventSource {
         } else if (query.date === 'weekend') {
           const weekendDays = getWeekendDates()
           if (!weekendDays.some(d => isSameDay(eventDate, d))) return false
+        } else {
+          // Treat as YYYY-MM-DD format
+          const queryDate = new Date(query.date)
+          if (!isSameDay(eventDate, queryDate)) return false
         }
       }
 

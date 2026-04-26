@@ -68,22 +68,29 @@ export function normalizeEvent(raw: EbEvent): Event {
   }
 }
 
-function getDateRange(date: 'today' | 'weekend'): { start: string; end?: string } {
+function getDateRange(date: string): { start: string; end?: string } {
   const now = new Date()
   if (date === 'today') {
     const end = new Date(now)
     end.setHours(23, 59, 59, 999)
     return { start: now.toISOString(), end: end.toISOString() }
   }
-  const day = now.getDay()
-  const daysToSat = day === 0 ? 6 : 6 - day
-  const sat = new Date(now)
-  sat.setDate(now.getDate() + daysToSat)
-  sat.setHours(0, 0, 0, 0)
-  const sun = new Date(sat)
-  sun.setDate(sat.getDate() + 1)
-  sun.setHours(23, 59, 59, 999)
-  return { start: sat.toISOString(), end: sun.toISOString() }
+  if (date === 'weekend') {
+    const day = now.getDay()
+    const daysToSat = day === 0 ? 6 : 6 - day
+    const sat = new Date(now)
+    sat.setDate(now.getDate() + daysToSat)
+    sat.setHours(0, 0, 0, 0)
+    const sun = new Date(sat)
+    sun.setDate(sat.getDate() + 1)
+    sun.setHours(23, 59, 59, 999)
+    return { start: sat.toISOString(), end: sun.toISOString() }
+  }
+  // Assume it's a YYYY-MM-DD format
+  const dateObj = new Date(date)
+  const end = new Date(dateObj)
+  end.setHours(23, 59, 59, 999)
+  return { start: dateObj.toISOString(), end: end.toISOString() }
 }
 
 export class EventbriteSource implements EventSource {

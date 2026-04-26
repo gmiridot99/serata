@@ -86,25 +86,38 @@ export function normalizeEvent(raw: TmEvent): Event {
   }
 }
 
-function getDateRange(date: 'today' | 'weekend'): { start: string; end: string } {
+function toTmDate(d: Date): string {
+  return d.toISOString().replace(/\.\d{3}Z$/, 'Z')
+}
+
+function getDateRange(date: string): { start: string; end: string } {
   const now = new Date()
   if (date === 'today') {
     const start = new Date(now)
     start.setHours(0, 0, 0, 0)
     const end = new Date(now)
-    end.setHours(23, 59, 59, 999)
-    return { start: start.toISOString(), end: end.toISOString() }
+    end.setHours(23, 59, 59, 0)
+    return { start: toTmDate(start), end: toTmDate(end) }
   }
-  // weekend: next Saturday 00:00 → next Sunday 23:59
-  const day = now.getDay() // 0=Sun, 6=Sat
-  const daysToSat = day === 0 ? 6 : 6 - day
-  const sat = new Date(now)
-  sat.setDate(now.getDate() + daysToSat)
-  sat.setHours(0, 0, 0, 0)
-  const sun = new Date(sat)
-  sun.setDate(sat.getDate() + 1)
-  sun.setHours(23, 59, 59, 999)
-  return { start: sat.toISOString(), end: sun.toISOString() }
+  if (date === 'weekend') {
+    // weekend: next Saturday 00:00 → next Sunday 23:59
+    const day = now.getDay() // 0=Sun, 6=Sat
+    const daysToSat = day === 0 ? 6 : 6 - day
+    const sat = new Date(now)
+    sat.setDate(now.getDate() + daysToSat)
+    sat.setHours(0, 0, 0, 0)
+    const sun = new Date(sat)
+    sun.setDate(sat.getDate() + 1)
+    sun.setHours(23, 59, 59, 0)
+    return { start: toTmDate(sat), end: toTmDate(sun) }
+  }
+  // Assume it's a YYYY-MM-DD format
+  const dateObj = new Date(date)
+  const start = new Date(dateObj)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(dateObj)
+  end.setHours(23, 59, 59, 0)
+  return { start: toTmDate(start), end: toTmDate(end) }
 }
 
 const TM_BASE = 'https://app.ticketmaster.com/discovery/v2'
@@ -150,7 +163,7 @@ export class TicketmasterSource implements EventSource {
       params.set('startDateTime', range.start)
       params.set('endDateTime', range.end)
     } else {
-      params.set('startDateTime', new Date().toISOString())
+      params.set('startDateTime', toTmDate(new Date()))
     }
 
     const res = await fetch(`${TM_BASE}/events.json?${params}`)
