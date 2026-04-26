@@ -7,9 +7,10 @@ type Props = {
   events: Event[]
   highlightedId?: string | null
   onCardHover?: (id: string | null) => void
+  onSelect?: (event: Event) => void
 }
 
-export default function EventGrid({ events, highlightedId, onCardHover }: Props) {
+export default function EventGrid({ events, highlightedId, onCardHover, onSelect }: Props) {
   if (events.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -27,6 +28,7 @@ export default function EventGrid({ events, highlightedId, onCardHover }: Props)
           highlighted={event.id === highlightedId}
           onHover={() => onCardHover?.(event.id)}
           onHoverEnd={() => onCardHover?.(null)}
+          onClick={() => onSelect?.(event)}
         />
       ))}
     </div>
