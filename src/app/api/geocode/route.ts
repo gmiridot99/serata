@@ -7,8 +7,11 @@ export async function GET(request: NextRequest) {
   const lng = searchParams.get('lng')
 
   if (!lat || !lng) {
-    return NextResponse.json({ city: null }, { status: 400 })
+    return NextResponse.json({ city: null, lat: null, lng: null }, { status: 400 })
   }
+
+  const latNum = parseFloat(lat)
+  const lngNum = parseFloat(lng)
 
   try {
     const url = new URL('https://maps.googleapis.com/maps/api/geocode/json')
@@ -17,19 +20,19 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('key', process.env.GOOGLE_PLACES_API_KEY ?? '')
 
     const res = await fetch(url.toString())
-    if (!res.ok) return NextResponse.json({ city: null })
+    if (!res.ok) return NextResponse.json({ city: null, lat: null, lng: null })
 
     const data = await res.json()
     const result = data.results?.[0]
-    if (!result) return NextResponse.json({ city: null })
+    if (!result) return NextResponse.json({ city: null, lat: null, lng: null })
 
     const locality = result.address_components?.find(
       (c: { types: string[] }) => c.types.includes('locality')
     )
     const city = locality?.long_name ?? null
 
-    return NextResponse.json({ city })
+    return NextResponse.json({ city, lat: latNum, lng: lngNum })
   } catch {
-    return NextResponse.json({ city: null })
+    return NextResponse.json({ city: null, lat: null, lng: null })
   }
 }
