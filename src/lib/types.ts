@@ -9,9 +9,9 @@ export type Event = {
   title: string
   description: string
   category: EventCategory
-  date: string       // ISO 8601 UTC
-  startTime: string  // "23:00" locale
-  endTime?: string   // "04:00" locale
+  date: string
+  startTime: string
+  endTime?: string
   venue: {
     name: string
     address: string
@@ -24,12 +24,22 @@ export type Event = {
   source: string
 }
 
+export type Location = {
+  name: string   // display label, e.g. "Navigli, Milano" or "Seregno"
+  lat: number
+  lng: number
+}
+
 export type EventQuery = {
-  city: string
+  city: string              // display name — always required for labels
+  lat?: number              // when present, use coords+radius instead of city string
+  lng?: number
+  radiusKm?: number         // defaults to 10 when lat/lng present
   category?: EventCategory | EventCategory[]
-  date?: 'today' | 'weekend'
+  date?: string             // 'today' | 'weekend' | 'YYYY-MM-DD'
   free?: boolean
-  q?: string   // keyword search (es. "cocktail bar", "discoteca techno")
+  q?: string                // venues mode keyword
+  mode?: 'events' | 'venues'
 }
 
 export interface EventSource {
