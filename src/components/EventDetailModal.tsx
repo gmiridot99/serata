@@ -62,7 +62,7 @@ export default function EventDetailModal({ event, onClose }: Props) {
     <>
       {/* Backdrop (mobile: closes on tap; desktop: decorative) */}
       <div
-        className="fixed inset-0 bg-black/50 z-40 md:bg-transparent"
+        className="fixed inset-0 bg-black/50 z-40 md:bg-transparent md:pointer-events-none"
         onClick={onClose}
       />
 
