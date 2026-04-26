@@ -92,6 +92,7 @@ function toTmDate(d: Date): string {
 
 function getDateRange(date: string): { start: string; end: string } {
   const now = new Date()
+
   if (date === 'today') {
     const start = new Date(now)
     start.setHours(0, 0, 0, 0)
@@ -99,9 +100,9 @@ function getDateRange(date: string): { start: string; end: string } {
     end.setHours(23, 59, 59, 0)
     return { start: toTmDate(start), end: toTmDate(end) }
   }
+
   if (date === 'weekend') {
-    // weekend: next Saturday 00:00 → next Sunday 23:59
-    const day = now.getDay() // 0=Sun, 6=Sat
+    const day = now.getDay()
     const daysToSat = day === 0 ? 6 : 6 - day
     const sat = new Date(now)
     sat.setDate(now.getDate() + daysToSat)
@@ -111,12 +112,11 @@ function getDateRange(date: string): { start: string; end: string } {
     sun.setHours(23, 59, 59, 0)
     return { start: toTmDate(sat), end: toTmDate(sun) }
   }
-  // Assume it's a YYYY-MM-DD format
-  const dateObj = new Date(date)
-  const start = new Date(dateObj)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(dateObj)
-  end.setHours(23, 59, 59, 0)
+
+  // YYYY-MM-DD — specific day in local time
+  const [year, month, day] = date.split('-').map(Number)
+  const start = new Date(year, month - 1, day, 0, 0, 0)
+  const end = new Date(year, month - 1, day, 23, 59, 59)
   return { start: toTmDate(start), end: toTmDate(end) }
 }
 
@@ -136,25 +136,29 @@ export class TicketmasterSource implements EventSource {
         : [query.category]
       : []
 
-    // Ticketmaster has no aperitivo/club — bail out early if that's all we need
     const tmCategories = categories.filter(c => c !== 'aperitivo' && c !== 'club')
     if (categories.length > 0 && tmCategories.length === 0) return []
 
     const params = new URLSearchParams({
       apikey: this.apiKey,
-      city: query.city,
       countryCode: 'IT',
       size: '50',
     })
 
-    // Map our categories to Ticketmaster classificationName
+    if (query.lat !== undefined && query.lng !== undefined) {
+      params.set('latlong', `${query.lat},${query.lng}`)
+      params.set('radius', String(query.radiusKm ?? 10))
+      params.set('unit', 'km')
+    } else {
+      params.set('city', query.city)
+    }
+
     if (tmCategories.length > 0) {
       const tmClassifications = tmCategories.map(c => {
         if (c === 'concert') return 'music'
         if (c === 'theatre') return 'arts & theatre'
         return 'miscellaneous'
       })
-      // Use the first classification (TM only supports one classificationName at a time)
       params.set('classificationName', tmClassifications[0])
     }
 
