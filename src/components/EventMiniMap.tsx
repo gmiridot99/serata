@@ -1,6 +1,6 @@
 'use client'
 
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 
 type Venue = {
   name: string
@@ -28,22 +28,19 @@ export default function EventMiniMap({ venue, className }: Props) {
 
   return (
     <div
-      className={`h-64 w-full rounded-xl overflow-hidden${className ? ` ${className}` : ''}`}
-      style={{ minHeight: '256px' }}
+      className={`h-40 w-full rounded-xl overflow-hidden${className ? ` ${className}` : ''}`}
     >
-      <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
-        <Map
-          mapId="DEMO_MAP_ID"
-          defaultCenter={{ lat: venue.lat, lng: venue.lng }}
-          defaultZoom={15}
-          styles={DARK_STYLE}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <AdvancedMarker position={{ lat: venue.lat, lng: venue.lng }}>
-            <Pin background="#e94560" borderColor="#e94560" glyphColor="#ffffff" />
-          </AdvancedMarker>
-        </Map>
-      </APIProvider>
+      <Map
+        mapId="DEMO_MAP_ID"
+        defaultCenter={{ lat: venue.lat, lng: venue.lng }}
+        defaultZoom={15}
+        styles={DARK_STYLE}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <AdvancedMarker position={{ lat: venue.lat, lng: venue.lng }}>
+          <Pin background="#e94560" borderColor="#e94560" glyphColor="#ffffff" />
+        </AdvancedMarker>
+      </Map>
     </div>
   )
 }
