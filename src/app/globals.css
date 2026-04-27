@@ -1,26 +1,46 @@
 @import "tailwindcss";
 
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --bg: #0d0d1a;
-  --bg-card: #1a1a2e;
-  --accent: #e94560;
-  --text: #ffffff;
-  --text-muted: #a0a0b0;
+  --bg:        #080807;
+  --card:      #111110;
+  --elev:      #1a1917;
+  --elev2:     #222018;
+  --text:      #f0e8d5;
+  --muted:     #5c564e;
+  --bright:    #9a8e80;
+  --accent:    #f0a020;
+  --accent-lo: rgba(240,160,32,0.10);
+  --border:    rgba(240,232,213,0.07);
+  --border-md: rgba(240,232,213,0.13);
 }
 
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.font-display {
+  font-family: 'Syne', sans-serif;
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-bg-card: var(--bg-card);
-  --color-accent: var(--accent);
-  --color-text: var(--text);
-  --color-text-muted: var(--text-muted);
-  --font-sans: var(--font-geist-sans);
+  --color-bg:        var(--bg);
+  --color-card:      var(--card);
+  --color-elev:      var(--elev);
+  --color-elev2:     var(--elev2);
+  --color-text:      var(--text);
+  --color-muted:     var(--muted);
+  --color-bright:    var(--bright);
+  --color-accent:    var(--accent);
+  --color-accent-lo: var(--accent-lo);
+  --color-border:    var(--border);
+  --color-border-md: var(--border-md);
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Syne', sans-serif;
 }
 
 @keyframes slideUp {
@@ -34,6 +54,12 @@ body {
 }
 
 @theme inline {
-  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-slide-up:    slideUp 0.3s ease-out;
   --animate-slide-right: slideRight 0.3s ease-out;
+  --animate-slide-up-fast: slideUp 0.2s ease-out;
+}
+
+/* safe-area padding for bottom nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }

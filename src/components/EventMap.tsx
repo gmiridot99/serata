@@ -9,6 +9,7 @@ type Props = {
   highlightedId?: string | null
   onSelect?: (event: Event) => void
   className?: string
+  isVenueMode?: boolean
 }
 
 const CATEGORY_COLORS: Record<EventCategory, string> = {
@@ -20,7 +21,7 @@ const CATEGORY_COLORS: Record<EventCategory, string> = {
 }
 
 
-export default function EventMap({ events, city, highlightedId, onSelect, className }: Props) {
+export default function EventMap({ events, city, highlightedId, onSelect, className, isVenueMode }: Props) {
   const mappableEvents = events.filter((e) => e.venue.lat !== 0 || e.venue.lng !== 0)
 
   const defaultCenter =
@@ -32,9 +33,15 @@ export default function EventMap({ events, city, highlightedId, onSelect, classN
 
   return (
     <div
-      className={`w-full h-full${className ? ` ${className}` : ''}`}
+      className={`w-full h-full relative${className ? ` ${className}` : ''}`}
       style={{ height: '100%', minHeight: '400px' }}
     >
+      {/* pill */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10
+        bg-bg/80 backdrop-blur-md border border-border rounded-full
+        px-3 py-1.5 text-xs font-semibold text-text pointer-events-none">
+        {mappableEvents.length} {isVenueMode ? 'locali' : 'eventi'}
+      </div>
       <Map
         key={city ?? 'default'}
         mapId="DEMO_MAP_ID"
@@ -45,7 +52,7 @@ export default function EventMap({ events, city, highlightedId, onSelect, classN
       >
         {mappableEvents.map((event) => {
           const isHighlighted = event.id === highlightedId
-          const bgColor = isHighlighted ? '#e94560' : CATEGORY_COLORS[event.category]
+          const bgColor = isHighlighted ? '#f0a020' : CATEGORY_COLORS[event.category]
           return (
             <AdvancedMarker
               key={event.id}
