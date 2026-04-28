@@ -16,22 +16,39 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL('https://maps.googleapis.com/maps/api/geocode/json')
     url.searchParams.set('latlng', `${lat},${lng}`)
-    url.searchParams.set('result_type', 'locality')
+    url.searchParams.set('language', 'it')
     url.searchParams.set('key', process.env.GOOGLE_PLACES_API_KEY ?? '')
 
     const res = await fetch(url.toString())
-    if (!res.ok) return NextResponse.json({ city: null, lat: null, lng: null })
+    if (!res.ok) return NextResponse.json({ city: null, lat: latNum, lng: lngNum })
 
     const data = await res.json()
-    const result = data.results?.[0]
-    if (!result) return NextResponse.json({ city: null, lat: null, lng: null })
+    if (!data.results?.length) return NextResponse.json({ city: null, lat: latNum, lng: lngNum })
 
-    const locality = result.address_components?.find(
-      (c: { types: string[] }) => c.types.includes('locality')
-    )
-    const city = locality?.long_name ?? null
+    // search all results for the most specific place name
+    // priority: locality > sublocality > admin_area_level_3 > admin_area_level_2
+    const PRIORITY = [
+      'locality',
+      'sublocality_level_1',
+      'sublocality',
+      'administrative_area_level_3',
+      'administrative_area_level_2',
+    ]
 
-    return NextResponse.json({ city, lat: latNum, lng: lngNum })
+    type Component = { types: string[]; long_name: string }
+
+    for (const type of PRIORITY) {
+      for (const result of data.results) {
+        const comp = (result.address_components as Component[])?.find((c) =>
+          c.types.includes(type)
+        )
+        if (comp?.long_name) {
+          return NextResponse.json({ city: comp.long_name, lat: latNum, lng: lngNum })
+        }
+      }
+    }
+
+    return NextResponse.json({ city: null, lat: latNum, lng: lngNum })
   } catch {
     return NextResponse.json({ city: null, lat: null, lng: null })
   }

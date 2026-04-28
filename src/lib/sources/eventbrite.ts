@@ -120,8 +120,6 @@ export class EventbriteSource implements EventSource {
       if (ids) params.set('categories', ids)
     }
 
-    if (query.free) params.set('price', 'free')
-
     if (query.date) {
       const range = getDateRange(query.date)
       params.set('start_date.range_start', range.start)

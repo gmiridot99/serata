@@ -2,6 +2,7 @@ import { cache } from 'react'
 import type { Event, EventQuery } from '@/lib/types'
 import { TicketmasterSource } from './ticketmaster'
 import { PlacesSource } from './places'
+import { expandVenueQuery } from '@/lib/venueExpand'
 
 const eventSources = [
   new TicketmasterSource(process.env.TICKETMASTER_API_KEY ?? ''),
@@ -11,7 +12,8 @@ const placesSource = new PlacesSource(process.env.GOOGLE_PLACES_API_KEY ?? '')
 
 export async function fetchEvents(query: EventQuery): Promise<Event[]> {
   if (query.mode === 'venues') {
-    return placesSource.fetch(query)
+    const terms = expandVenueQuery(query.q ?? '')
+    return placesSource.fetchMulti(query, terms)
   }
   const results = await Promise.allSettled(eventSources.map((s) => s.fetch(query)))
   results.forEach((r, i) => {

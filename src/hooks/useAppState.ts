@@ -3,14 +3,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { Event, Location } from '@/lib/types'
+import type { Event, EventCategory, Location } from '@/lib/types'
 
 export type Filters = {
   mode: 'events' | 'venues'
   date?: string       // 'today' | 'weekend' | 'YYYY-MM-DD'
-  free: boolean
   q?: string          // venues mode keyword
   radiusKm: number    // default 10
+  category?: EventCategory[]
 }
 
 export type GeoStatus = 'pending' | 'granted' | 'denied'
@@ -33,12 +33,13 @@ function parseFilters(params: URLSearchParams): Filters {
   const modeVal = params.get('mode')
   const dateVal = params.get('date')
   const radiusVal = params.get('radius')
+  const catVal = params.get('category')
   return {
     mode: modeVal === 'venues' ? 'venues' : 'events',
     date: dateVal ?? undefined,
-    free: params.get('free') === 'true',
     q: params.get('q') ?? undefined,
     radiusKm: Math.max(1, parseInt(radiusVal ?? '10', 10) || 10),
+    category: catVal ? (catVal.split(',') as EventCategory[]) : undefined,
   }
 }
 
@@ -59,8 +60,8 @@ async function apiFetchEvents(location: Location, filters: Filters): Promise<Eve
     mode: filters.mode,
   })
   if (filters.date) params.set('date', filters.date)
-  if (filters.free) params.set('free', 'true')
   if (filters.q) params.set('q', filters.q)
+  if (filters.category?.length) params.set('category', filters.category.join(','))
   const res = await fetch(`/api/events?${params}`)
   if (!res.ok) throw new Error(`events fetch failed: ${res.status}`)
   return res.json()
@@ -97,9 +98,9 @@ export function useAppState(): AppState {
       }
       params.set('mode', newFilters.mode)
       if (newFilters.date) params.set('date', newFilters.date)
-      if (newFilters.free) params.set('free', 'true')
       if (newFilters.q) params.set('q', newFilters.q)
       if (newFilters.radiusKm !== 10) params.set('radius', String(newFilters.radiusKm))
+      if (newFilters.category?.length) params.set('category', newFilters.category.join(','))
       const qs = params.toString()
       router.replace(qs ? `/?${qs}` : '/', { scroll: false })
     },

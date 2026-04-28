@@ -175,12 +175,7 @@ export class TicketmasterSource implements EventSource {
 
     const data = await res.json()
     const events: TmEvent[] = data._embedded?.events ?? []
-    const normalized = events.map(normalizeEvent)
-
-    if (query.free) {
-      return normalized.filter(e => e.price === 'free')
-    }
-    return normalized
+    return events.map(normalizeEvent)
   }
 
   async fetchById(id: string): Promise<Event | null> {

@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0d0d1a;
-  --bg-card: #1a1a2e;
-  --accent: #e94560;
-  --text: #ffffff;
-  --text-muted: #a0a0b0;
+  --bg:        #080807;
+  --card:      #111110;
+  --elev:      #1a1917;
+  --elev2:     #222018;
+  --text:      #f0e8d5;
+  --muted:     #5c564e;
+  --bright:    #9a8e80;
+  --accent:    #f0a020;
+  --accent-lo: rgba(240,160,32,0.10);
+  --border:    rgba(240,232,213,0.07);
+  --border-md: rgba(240,232,213,0.13);
 }
 
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-syne), sans-serif;
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-bg-card: var(--bg-card);
-  --color-accent: var(--accent);
-  --color-text: var(--text);
-  --color-text-muted: var(--text-muted);
-  --font-sans: var(--font-geist-sans);
+  --color-bg:        var(--bg);
+  --color-card:      var(--card);
+  --color-elev:      var(--elev);
+  --color-elev2:     var(--elev2);
+  --color-text:      var(--text);
+  --color-muted:     var(--muted);
+  --color-bright:    var(--bright);
+  --color-accent:    var(--accent);
+  --color-accent-lo: var(--accent-lo);
+  --color-border:    var(--border);
+  --color-border-md: var(--border-md);
+  --font-sans: var(--font-dm-sans), sans-serif;
+  --font-display: var(--font-syne), sans-serif;
 }
 
 @keyframes slideUp {
@@ -34,6 +51,78 @@ body {
 }
 
 @theme inline {
-  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-slide-up:    slideUp 0.3s ease-out;
   --animate-slide-right: slideRight 0.3s ease-out;
+  --animate-slide-up-fast: slideUp 0.2s ease-out;
+}
+
+/* safe-area padding for bottom nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Radius slider — custom range input */
+.radius-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--accent);
+  cursor: pointer;
+}
+.radius-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  cursor: pointer;
+}
+
+/* Google Places Autocomplete — styled to match app theme */
+.pac-container {
+  background: var(--card);
+  border: 1px solid var(--border-md);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-dm-sans), sans-serif;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.pac-item {
+  color: var(--text);
+  border-color: var(--border);
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 13px;
+  transition: background 0.12s;
+}
+.pac-item:hover,
+.pac-item-selected {
+  background: var(--elev2);
+}
+.pac-item-query {
+  color: var(--text);
+  font-size: 13px;
+}
+.pac-matched {
+  color: var(--accent);
+  font-weight: 600;
+}
+.pac-icon,
+.pac-logo::after {
+  display: none;
+}
+.pac-item-query + span {
+  color: var(--muted);
 }

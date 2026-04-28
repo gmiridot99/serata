@@ -53,10 +53,6 @@ export async function GET(request: NextRequest) {
       query.date = dateParam
     }
 
-    if (searchParams.get('free') === 'true') {
-      query.free = true
-    }
-
     const q = searchParams.get('q')
     if (q?.trim()) {
       query.q = q.trim()

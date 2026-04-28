@@ -337,11 +337,6 @@ export class MockSource implements EventSource {
         return false
       }
 
-      // free filter
-      if (query.free && e.price !== 'free') {
-        return false
-      }
-
       // date filter
       if (query.date) {
         const eventDate = new Date(e.date)
