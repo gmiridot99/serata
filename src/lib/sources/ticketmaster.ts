@@ -165,6 +165,9 @@ export class TicketmasterSource implements EventSource {
       const range = getDateRange(query.date)
       params.set('startDateTime', range.start)
       params.set('endDateTime', range.end)
+    } else if (query.dateRange) {
+      params.set('startDateTime', query.dateRange.start)
+      params.set('endDateTime', query.dateRange.end)
     } else {
       params.set('startDateTime', toTmDate(new Date()))
     }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 function toLocalIsoDate(d: Date): string {
   const y = d.getFullYear()
@@ -33,22 +33,44 @@ function buildPills(): Pill[] {
 
 const WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
+type LocationInfo = { city: string; lat?: number; lng?: number; radiusKm?: number }
+
 function CalendarPopover({
   value,
   onChange,
   onClose,
-  eventDates,
+  eventDates: initialEventDates,
+  location,
 }: {
   value?: string
   onChange: (date: string) => void
   onClose: () => void
   eventDates?: Set<string>
+  location?: LocationInfo
 }) {
   const todayIso = toLocalIsoDate(new Date())
   const initDate =
     value && value !== 'today' ? new Date(value + 'T00:00:00') : new Date()
   const [year, setYear] = useState(initDate.getFullYear())
   const [month, setMonth] = useState(initDate.getMonth())
+  const [fetchedDates, setFetchedDates] = useState<Set<string>>(initialEventDates ?? new Set())
+
+  const fetchMonthDates = useCallback(async (y: number, m: number) => {
+    if (!location) return
+    const monthStr = `${y}-${String(m + 1).padStart(2, '0')}`
+    const params = new URLSearchParams({ city: location.city, month: monthStr })
+    if (location.lat !== undefined) params.set('lat', String(location.lat))
+    if (location.lng !== undefined) params.set('lng', String(location.lng))
+    if (location.radiusKm !== undefined) params.set('radius', String(location.radiusKm))
+    try {
+      const res = await fetch(`/api/events/dates?${params}`)
+      if (!res.ok) return
+      const dates: string[] = await res.json()
+      setFetchedDates(new Set(dates))
+    } catch { /* ignore */ }
+  }, [location])
+
+  useEffect(() => { fetchMonthDates(year, month) }, [year, month, fetchMonthDates])
 
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const startOffset = (new Date(year, month, 1).getDay() + 6) % 7 // Mon-first
@@ -135,7 +157,7 @@ function CalendarPopover({
                 }`}
             >
               {day}
-              {eventDates?.has(iso) && !isPast && (
+              {fetchedDates.has(iso) && !isPast && (
                 <span className={`w-1 h-1 rounded-full shrink-0 ${isSelected ? 'bg-bg' : 'bg-accent'}`} />
               )}
             </button>
@@ -151,9 +173,10 @@ type Props = {
   onChange: (date: string | undefined) => void
   className?: string
   eventDates?: Set<string>
+  location?: LocationInfo
 }
 
-export default function DateTabs({ value, onChange, className, eventDates }: Props) {
+export default function DateTabs({ value, onChange, className, eventDates, location }: Props) {
   const pills = buildPills()
   const [showCalendar, setShowCalendar] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -242,6 +265,7 @@ export default function DateTabs({ value, onChange, className, eventDates }: Pro
             onChange={(date) => onChange(date)}
             onClose={() => setShowCalendar(false)}
             eventDates={eventDates}
+            location={location}
           />
         )}
       </div>

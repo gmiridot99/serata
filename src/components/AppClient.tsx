@@ -121,6 +121,7 @@ function AppInner() {
               value={filters.date}
               onChange={(date) => setFilters({ ...filters, date })}
               eventDates={eventDates}
+              location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
             />
 
             <div className="w-px h-5 bg-border mx-3 shrink-0" />
@@ -159,6 +160,7 @@ function AppInner() {
               onChange={(date) => setFilters({ ...filters, date })}
               className="px-4"
               eventDates={eventDates}
+              location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
             />
             <div className="flex items-center gap-2 px-4 pb-3 pt-1">
               <CategoryChips
