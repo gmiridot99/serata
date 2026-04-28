@@ -37,10 +37,12 @@ function CalendarPopover({
   value,
   onChange,
   onClose,
+  eventDates,
 }: {
   value?: string
   onChange: (date: string) => void
   onClose: () => void
+  eventDates?: Set<string>
 }) {
   const todayIso = toLocalIsoDate(new Date())
   const initDate =
@@ -121,8 +123,8 @@ function CalendarPopover({
               key={i}
               onClick={() => selectDay(day)}
               disabled={isPast}
-              className={`aspect-square flex items-center justify-center rounded-lg text-xs
-                font-medium transition-colors cursor-pointer
+              className={`aspect-square flex flex-col items-center justify-center rounded-lg text-xs
+                font-medium transition-colors cursor-pointer gap-0.5
                 ${isSelected
                   ? 'bg-accent text-bg font-bold'
                   : isToday
@@ -133,6 +135,9 @@ function CalendarPopover({
                 }`}
             >
               {day}
+              {eventDates?.has(iso) && !isPast && (
+                <span className={`w-1 h-1 rounded-full shrink-0 ${isSelected ? 'bg-bg' : 'bg-accent'}`} />
+              )}
             </button>
           )
         })}
@@ -145,9 +150,10 @@ type Props = {
   value?: string
   onChange: (date: string | undefined) => void
   className?: string
+  eventDates?: Set<string>
 }
 
-export default function DateTabs({ value, onChange, className }: Props) {
+export default function DateTabs({ value, onChange, className, eventDates }: Props) {
   const pills = buildPills()
   const [showCalendar, setShowCalendar] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -235,6 +241,7 @@ export default function DateTabs({ value, onChange, className }: Props) {
             value={value}
             onChange={(date) => onChange(date)}
             onClose={() => setShowCalendar(false)}
+            eventDates={eventDates}
           />
         )}
       </div>

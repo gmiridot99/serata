@@ -36,6 +36,8 @@ function AppInner() {
 
   const isVenueMode = filters.mode === 'venues'
 
+  const eventDates = new Set(events.map((e) => e.date.slice(0, 10)))
+
   useEffect(() => {
     if (geoStatus === 'denied' && !location) setLocationOpen(true)
   }, [geoStatus, location])
@@ -118,6 +120,7 @@ function AppInner() {
             <DateTabs
               value={filters.date}
               onChange={(date) => setFilters({ ...filters, date })}
+              eventDates={eventDates}
             />
 
             <div className="w-px h-5 bg-border mx-3 shrink-0" />
@@ -155,6 +158,7 @@ function AppInner() {
               value={filters.date}
               onChange={(date) => setFilters({ ...filters, date })}
               className="px-4"
+              eventDates={eventDates}
             />
             <div className="flex items-center gap-2 px-4 pb-3 pt-1">
               <CategoryChips
