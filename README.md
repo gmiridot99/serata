@@ -16,6 +16,13 @@ perché ogni volta che voglio uscire devo aprire maps, instagram, dice, e altri 
 - mobile first con bottom nav
 - dati da Google Maps e Ticketmaster
 
+## screenshot
+
+| desktop | mobile |
+|---|---|
+| ![desktop lista+mappa](public/screenshots/Screenshot%202026-04-28%20222723.png) | ![mobile lista](public/screenshots/Screenshot%202026-04-28%20222912.png) |
+| ![desktop evento](public/screenshots/Screenshot%202026-04-28%20222855.png) | ![desktop londra](public/screenshots/Screenshot%202026-04-28%20223003.png) |
+
 ## stack
 
 ![Next.js](https://img.shields.io/badge/Next.js-black?style=flat&logo=next.js)
