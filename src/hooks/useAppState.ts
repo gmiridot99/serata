@@ -8,7 +8,6 @@ import type { Event, EventCategory, Location } from '@/lib/types'
 export type Filters = {
   mode: 'events' | 'venues'
   date?: string       // 'today' | 'weekend' | 'YYYY-MM-DD'
-  free: boolean
   q?: string          // venues mode keyword
   radiusKm: number    // default 10
   category?: EventCategory[]
@@ -38,7 +37,6 @@ function parseFilters(params: URLSearchParams): Filters {
   return {
     mode: modeVal === 'venues' ? 'venues' : 'events',
     date: dateVal ?? undefined,
-    free: params.get('free') === 'true',
     q: params.get('q') ?? undefined,
     radiusKm: Math.max(1, parseInt(radiusVal ?? '10', 10) || 10),
     category: catVal ? (catVal.split(',') as EventCategory[]) : undefined,
@@ -62,7 +60,6 @@ async function apiFetchEvents(location: Location, filters: Filters): Promise<Eve
     mode: filters.mode,
   })
   if (filters.date) params.set('date', filters.date)
-  if (filters.free) params.set('free', 'true')
   if (filters.q) params.set('q', filters.q)
   if (filters.category?.length) params.set('category', filters.category.join(','))
   const res = await fetch(`/api/events?${params}`)
@@ -101,7 +98,6 @@ export function useAppState(): AppState {
       }
       params.set('mode', newFilters.mode)
       if (newFilters.date) params.set('date', newFilters.date)
-      if (newFilters.free) params.set('free', 'true')
       if (newFilters.q) params.set('q', newFilters.q)
       if (newFilters.radiusKm !== 10) params.set('radius', String(newFilters.radiusKm))
       if (newFilters.category?.length) params.set('category', newFilters.category.join(','))

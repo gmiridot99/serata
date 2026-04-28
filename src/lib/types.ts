@@ -37,7 +37,6 @@ export type EventQuery = {
   radiusKm?: number         // defaults to 10 when lat/lng present
   category?: EventCategory | EventCategory[]
   date?: string             // 'today' | 'weekend' | 'YYYY-MM-DD'
-  free?: boolean
   q?: string                // venues mode keyword
   mode?: 'events' | 'venues'
 }

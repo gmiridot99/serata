@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function toLocalIsoDate(d: Date): string {
   const y = d.getFullYear()
@@ -31,6 +31,116 @@ function buildPills(): Pill[] {
   return pills
 }
 
+const WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+
+function CalendarPopover({
+  value,
+  onChange,
+  onClose,
+}: {
+  value?: string
+  onChange: (date: string) => void
+  onClose: () => void
+}) {
+  const todayIso = toLocalIsoDate(new Date())
+  const initDate =
+    value && value !== 'today' ? new Date(value + 'T00:00:00') : new Date()
+  const [year, setYear] = useState(initDate.getFullYear())
+  const [month, setMonth] = useState(initDate.getMonth())
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const startOffset = (new Date(year, month, 1).getDay() + 6) % 7 // Mon-first
+
+  const monthLabel = new Date(year, month).toLocaleDateString('it-IT', {
+    month: 'long',
+    year: 'numeric',
+  })
+
+  const selectedIso = value === 'today' ? todayIso : value
+
+  function prevMonth() {
+    if (month === 0) { setMonth(11); setYear((y) => y - 1) }
+    else setMonth((m) => m - 1)
+  }
+  function nextMonth() {
+    if (month === 11) { setMonth(0); setYear((y) => y + 1) }
+    else setMonth((m) => m + 1)
+  }
+
+  function selectDay(day: number) {
+    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    onChange(iso === todayIso ? 'today' : iso)
+    onClose()
+  }
+
+  const cells: (number | null)[] = []
+  for (let i = 0; i < startOffset; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div className="absolute top-full right-0 mt-2 z-50 bg-card border border-border-md
+      rounded-2xl shadow-2xl p-4 w-64 select-none">
+      {/* month nav */}
+      <div className="flex items-center justify-between mb-3">
+        <button
+          onClick={prevMonth}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-muted
+            hover:text-text hover:bg-elev transition-colors text-base"
+        >
+          ‹
+        </button>
+        <span className="text-sm font-semibold text-text capitalize">{monthLabel}</span>
+        <button
+          onClick={nextMonth}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-muted
+            hover:text-text hover:bg-elev transition-colors text-base"
+        >
+          ›
+        </button>
+      </div>
+
+      {/* weekday headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {WEEKDAYS.map((d, i) => (
+          <div key={i} className="text-center text-[10px] text-muted py-1 font-medium">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* day grid */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />
+          const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const isSelected = iso === selectedIso
+          const isToday = iso === todayIso
+          const isPast = iso < todayIso
+          return (
+            <button
+              key={i}
+              onClick={() => selectDay(day)}
+              disabled={isPast}
+              className={`aspect-square flex items-center justify-center rounded-lg text-xs
+                font-medium transition-colors cursor-pointer
+                ${isSelected
+                  ? 'bg-accent text-bg font-bold'
+                  : isToday
+                  ? 'ring-1 ring-accent text-accent'
+                  : isPast
+                  ? 'text-muted/40 cursor-default'
+                  : 'text-text hover:bg-elev2'
+                }`}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 type Props = {
   value?: string
   onChange: (date: string | undefined) => void
@@ -39,22 +149,25 @@ type Props = {
 
 export default function DateTabs({ value, onChange, className }: Props) {
   const pills = buildPills()
-  const dateInputRef = useRef<HTMLInputElement>(null)
+  const [showCalendar, setShowCalendar] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   const isCustomDate =
     value !== undefined &&
     value !== 'today' &&
     !pills.some((p) => p.value === value)
 
-  function handleDateInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = e.target.value
-    if (!picked) return
-    const todayIso = toLocalIsoDate(new Date())
-    if (picked === todayIso) { onChange('today'); return }
-    const matchingPill = pills.find((p) => p.value === picked)
-    if (matchingPill) { onChange(matchingPill.value); return }
-    onChange(picked)
-  }
+  // close calendar on outside click
+  useEffect(() => {
+    if (!showCalendar) return
+    function handle(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowCalendar(false)
+      }
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [showCalendar])
 
   function formatCustomPill(iso: string): string {
     const [y, m, d] = iso.split('-').map(Number)
@@ -63,41 +176,50 @@ export default function DateTabs({ value, onChange, className }: Props) {
   }
 
   return (
-    <div className={`flex overflow-x-auto border-b border-border [&::-webkit-scrollbar]:hidden${className ? ` ${className}` : ''}`}>
-      {pills.map((pill) => {
-        const active = value === pill.value
-        return (
-          <button
-            key={pill.value}
-            onClick={() => onChange(active ? undefined : pill.value)}
-            className={`shrink-0 flex flex-col items-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
-              text-xs font-medium transition-colors
-              ${active
-                ? 'border-accent text-accent'
-                : 'border-transparent text-muted hover:text-bright'
-              }`}
-          >
-            <span className="font-semibold lowercase">{pill.label}</span>
-            {pill.sublabel && <span className="opacity-60 text-[10px]">{pill.sublabel}</span>}
-          </button>
-        )
-      })}
+    <div
+      ref={wrapperRef}
+      className={`relative flex items-stretch${className ? ` ${className}` : ''}`}
+    >
+      {/* scrollable pills */}
+      <div className="flex-1 min-w-0 flex overflow-x-auto border-b border-border [&::-webkit-scrollbar]:hidden">
+        {pills.map((pill) => {
+          const active = value === pill.value
+          return (
+            <button
+              key={pill.value}
+              onClick={() => onChange(active ? undefined : pill.value)}
+              className={`shrink-0 flex flex-col items-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
+                text-xs font-medium transition-colors
+                ${active
+                  ? 'border-accent text-accent'
+                  : 'border-transparent text-muted hover:text-bright'
+                }`}
+            >
+              <span className="font-semibold lowercase">{pill.label}</span>
+              {pill.sublabel && <span className="opacity-60 text-[10px]">{pill.sublabel}</span>}
+            </button>
+          )
+        })}
 
-      {isCustomDate ? (
-        <button
-          onClick={() => onChange(undefined)}
-          className="shrink-0 flex flex-col items-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
-            border-accent text-accent text-xs font-medium"
-        >
-          <span className="font-semibold">{formatCustomPill(value!)}</span>
-          <span className="opacity-60 text-[10px]">×</span>
-        </button>
-      ) : (
+        {isCustomDate && (
+          <button
+            onClick={() => onChange(undefined)}
+            className="shrink-0 flex flex-col items-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
+              border-accent text-accent text-xs font-medium"
+          >
+            <span className="font-semibold">{formatCustomPill(value!)}</span>
+            <span className="opacity-60 text-[10px]">×</span>
+          </button>
+        )}
+      </div>
+
+      {/* calendar button — always visible, pinned right */}
+      <div className="shrink-0 border-b border-border flex items-center relative">
         <button
           aria-label="calendario"
-          onClick={() => dateInputRef.current?.showPicker?.() ?? dateInputRef.current?.click()}
-          className="shrink-0 flex items-center justify-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
-            border-transparent text-muted hover:text-bright"
+          onClick={() => setShowCalendar((s) => !s)}
+          className={`flex items-center justify-center px-3 transition-colors
+            ${showCalendar ? 'text-accent' : 'text-muted hover:text-bright'}`}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -107,15 +229,15 @@ export default function DateTabs({ value, onChange, className }: Props) {
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
         </button>
-      )}
 
-      <input
-        ref={dateInputRef}
-        type="date"
-        className="sr-only"
-        tabIndex={-1}
-        onChange={handleDateInputChange}
-      />
+        {showCalendar && (
+          <CalendarPopover
+            value={value}
+            onChange={(date) => onChange(date)}
+            onClose={() => setShowCalendar(false)}
+          />
+        )}
+      </div>
     </div>
   )
 }

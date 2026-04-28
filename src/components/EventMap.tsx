@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 import { Event, EventCategory } from '@/lib/types'
 
@@ -10,6 +11,8 @@ type Props = {
   onSelect?: (event: Event) => void
   className?: string
   isVenueMode?: boolean
+  radiusKm?: number
+  onRadiusChange?: (km: number) => void
 }
 
 const CATEGORY_COLORS: Record<EventCategory, string> = {
@@ -20,8 +23,10 @@ const CATEGORY_COLORS: Record<EventCategory, string> = {
   other: '#6b7280',
 }
 
-
-export default function EventMap({ events, city, highlightedId, onSelect, className, isVenueMode }: Props) {
+export default function EventMap({
+  events, city, highlightedId, onSelect, className,
+  isVenueMode, radiusKm = 10, onRadiusChange,
+}: Props) {
   const mappableEvents = events.filter((e) => e.venue.lat !== 0 || e.venue.lng !== 0)
 
   const defaultCenter =
@@ -31,17 +36,55 @@ export default function EventMap({ events, city, highlightedId, onSelect, classN
 
   const defaultZoom = mappableEvents.length > 0 ? 12 : 6
 
+  // local state for smooth slider dragging — debounce the actual fetch
+  const [localRadius, setLocalRadius] = useState(radiusKm)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // sync when prop changes externally (URL load, location change)
+  useEffect(() => { setLocalRadius(radiusKm) }, [radiusKm])
+
+  function handleSlider(v: number) {
+    setLocalRadius(v)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => onRadiusChange?.(v), 300)
+  }
+
+  const trackPct = ((localRadius - 1) / (50 - 1)) * 100
+
   return (
     <div
       className={`w-full h-full relative${className ? ` ${className}` : ''}`}
       style={{ height: '100%', minHeight: '400px' }}
     >
-      {/* pill */}
+      {/* count pill */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10
         bg-bg/80 backdrop-blur-md border border-border rounded-full
         px-3 py-1.5 text-xs font-semibold text-text pointer-events-none">
         {mappableEvents.length} {isVenueMode ? 'locali' : 'eventi'}
       </div>
+
+      {/* radius slider — top-right */}
+      {onRadiusChange && (
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2
+          bg-bg/80 backdrop-blur-md border border-border rounded-full px-3 py-2">
+          <input
+            type="range"
+            min="1"
+            max="50"
+            step="1"
+            value={localRadius}
+            onChange={(e) => handleSlider(parseInt(e.target.value))}
+            className="radius-slider w-24"
+            style={{
+              background: `linear-gradient(to right, var(--accent) ${trackPct}%, rgba(240,232,213,0.07) ${trackPct}%)`,
+            }}
+          />
+          <span className="text-[11px] font-semibold text-accent tabular-nums w-9 shrink-0">
+            {localRadius}km
+          </span>
+        </div>
+      )}
+
       <Map
         key={city ?? 'default'}
         mapId="DEMO_MAP_ID"

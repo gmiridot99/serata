@@ -78,9 +78,9 @@ export class PlacesSource implements EventSource {
   }
 
   async fetch(query: EventQuery): Promise<Event[]> {
-    if (!query.q) return []
-
-    const textQuery = `${query.q} ${query.city}`
+    const textQuery = query.q
+      ? `${query.q} ${query.city}`
+      : `locali bar ristorante ${query.city ?? ''}`
 
     const requestBody: Record<string, unknown> = {
       textQuery,
@@ -115,10 +115,6 @@ export class PlacesSource implements EventSource {
 
     let results = places.map((p) => normalizePlaceToEvent(p, this.apiKey))
 
-    if (query.free) {
-      results = results.filter((e) => e.price === 'free')
-    }
-
     const cats = Array.isArray(query.category)
       ? query.category
       : query.category
@@ -129,6 +125,25 @@ export class PlacesSource implements EventSource {
     }
 
     return results
+  }
+
+  async fetchMulti(query: EventQuery, terms: string[]): Promise<Event[]> {
+    const results = await Promise.allSettled(
+      terms.map((term) => this.fetch({ ...query, q: term }))
+    )
+    const seen = new Set<string>()
+    const events: Event[] = []
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        for (const e of r.value) {
+          if (!seen.has(e.id)) {
+            seen.add(e.id)
+            events.push(e)
+          }
+        }
+      }
+    }
+    return events
   }
 
   async fetchById(id: string): Promise<Event | null> {

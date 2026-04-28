@@ -9,35 +9,12 @@ import DateTabs from './DateTabs'
 import CategoryChips from './CategoryChips'
 import LocationChip from './LocationChip'
 import LocationOverlay from './LocationOverlay'
-import FilterSheet from './FilterSheet'
 import SplitView from './SplitView'
 import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
+import VenueSearch from './VenueSearch'
 
 type MobileTab = 'events' | 'map' | 'venues'
-
-function FilterButton({ onClick, activeCount }: { onClick: () => void; activeCount: number }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-md
-        text-xs font-medium text-text hover:border-border transition-colors shrink-0"
-    >
-      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="4" y1="6" x2="20" y2="6" />
-        <line x1="8" y1="12" x2="16" y2="12" />
-        <line x1="11" y1="18" x2="13" y2="18" />
-      </svg>
-      <span>filtri</span>
-      {activeCount > 0 && (
-        <span className="w-4 h-4 rounded-full bg-accent text-bg text-[10px] font-bold flex items-center justify-center">
-          {activeCount}
-        </span>
-      )}
-    </button>
-  )
-}
 
 function AppInner() {
   const {
@@ -55,7 +32,6 @@ function AppInner() {
   } = useAppState()
 
   const [locationOpen, setLocationOpen] = useState(false)
-  const [filterOpen, setFilterOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState<MobileTab>('events')
 
   const isVenueMode = filters.mode === 'venues'
@@ -63,11 +39,6 @@ function AppInner() {
   useEffect(() => {
     if (geoStatus === 'denied' && !location) setLocationOpen(true)
   }, [geoStatus, location])
-
-  const activeFilterCount =
-    (filters.free ? 1 : 0) +
-    (filters.radiusKm !== 10 ? 1 : 0) +
-    (filters.category?.length ? 1 : 0)
 
   function handleMobileTabChange(tab: MobileTab) {
     setMobileTab(tab)
@@ -90,16 +61,37 @@ function AppInner() {
   }
 
   function handleUseMyLocation() {
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      try {
-        const res = await fetch(`/api/geocode?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`)
-        const data = await res.json()
-        if (data.city && data.lat !== null && data.lng !== null) {
-          setLocation({ name: data.city, lat: data.lat, lng: data.lng })
+    if (!navigator.geolocation) {
+      alert('Geolocalizzazione non supportata da questo browser.')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        console.log('[geo] raw coords:', lat, lng)
+        try {
+          const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`)
+          const data = await res.json()
+          console.log('[geo] geocode response:', data)
+          setLocation({
+            name: data.city ?? 'La mia posizione',
+            lat: data.lat ?? lat,
+            lng: data.lng ?? lng,
+          })
+        } catch {
+          setLocation({ name: 'La mia posizione', lat, lng })
         }
-      } catch { /* ignore */ }
-    })
+      },
+      (err) => {
+        const msgs: Record<number, string> = {
+          1: 'Permesso negato. Abilita la geolocalizzazione nelle impostazioni del browser.',
+          2: 'Posizione non disponibile.',
+          3: 'Timeout rilevamento posizione.',
+        }
+        alert(msgs[err.code] ?? 'Errore geolocalizzazione.')
+      },
+      { timeout: 10000 }
+    )
   }
 
   return (
@@ -116,25 +108,30 @@ function AppInner() {
 
         <div className="w-px h-5 bg-border mx-3 shrink-0" />
 
-        {!isVenueMode && (
-          <DateTabs
-            value={filters.date}
-            onChange={(date) => setFilters({ ...filters, date })}
+        {isVenueMode ? (
+          <VenueSearch
+            value={filters.q ?? ''}
+            onChange={(q) => setFilters({ ...filters, q: q || undefined })}
           />
+        ) : (
+          <>
+            <DateTabs
+              value={filters.date}
+              onChange={(date) => setFilters({ ...filters, date })}
+            />
+
+            <div className="w-px h-5 bg-border mx-3 shrink-0" />
+
+            <CategoryChips
+              value={filters.category}
+              onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
+            />
+          </>
         )}
-
-        <div className="w-px h-5 bg-border mx-3 shrink-0" />
-
-        <CategoryChips
-          value={filters.category}
-          onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
-        />
 
         <div className="flex-1" />
 
-        <FilterButton onClick={() => setFilterOpen(true)} activeCount={activeFilterCount} />
-
-        <span className="text-xs text-muted ml-4 shrink-0 tabular-nums">
+        <span className="text-xs text-muted shrink-0 tabular-nums">
           {events.length} {isVenueMode ? 'locali' : 'eventi'}
         </span>
       </header>
@@ -145,20 +142,28 @@ function AppInner() {
           <span className="font-display font-black text-xl text-accent tracking-tight">serata</span>
           <LocationChip location={location} onClick={() => setLocationOpen(true)} />
         </div>
-        {!isVenueMode && (
-          <DateTabs
-            value={filters.date}
-            onChange={(date) => setFilters({ ...filters, date })}
-            className="px-4"
-          />
+        {isVenueMode ? (
+          <div className="px-4 pb-3 pt-1">
+            <VenueSearch
+              value={filters.q ?? ''}
+              onChange={(q) => setFilters({ ...filters, q: q || undefined })}
+            />
+          </div>
+        ) : (
+          <>
+            <DateTabs
+              value={filters.date}
+              onChange={(date) => setFilters({ ...filters, date })}
+              className="px-4"
+            />
+            <div className="flex items-center gap-2 px-4 pb-3 pt-1">
+              <CategoryChips
+                value={filters.category}
+                onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
+              />
+            </div>
+          </>
         )}
-        <div className="flex items-center gap-2 px-4 pb-3 pt-1">
-          <CategoryChips
-            value={filters.category}
-            onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
-          />
-          <FilterButton onClick={() => setFilterOpen(true)} activeCount={activeFilterCount} />
-        </div>
       </header>
 
       <SplitView
@@ -170,6 +175,8 @@ function AppInner() {
         onSelect={setSelectedEvent}
         mobileTab={mobileTab}
         isVenueMode={isVenueMode}
+        radiusKm={filters.radiusKm}
+        onRadiusChange={(km) => setFilters({ ...filters, radiusKm: km })}
       />
 
       <BottomNav activeTab={mobileTab} onChange={handleMobileTabChange} />
@@ -179,13 +186,6 @@ function AppInner() {
         onClose={() => setLocationOpen(false)}
         onSelect={setLocation}
         onUseMyLocation={handleUseMyLocation}
-      />
-
-      <FilterSheet
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        filters={filters}
-        onChange={setFilters}
       />
 
       <EventDetailModal

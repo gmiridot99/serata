@@ -15,6 +15,8 @@ type Props = {
   onSelect: (event: Event) => void
   mobileTab?: 'events' | 'map' | 'venues'
   isVenueMode?: boolean
+  radiusKm?: number
+  onRadiusChange?: (km: number) => void
 }
 
 export default function SplitView({
@@ -26,6 +28,8 @@ export default function SplitView({
   onSelect,
   mobileTab = 'events',
   isVenueMode = false,
+  radiusKm,
+  onRadiusChange,
 }: Props) {
   if (loading) {
     return (
@@ -48,6 +52,8 @@ export default function SplitView({
             highlightedId={highlightedId}
             onSelect={onSelect}
             isVenueMode={isVenueMode}
+            radiusKm={radiusKm}
+            onRadiusChange={onRadiusChange}
             className="h-full"
           />
         ) : (
@@ -79,6 +85,8 @@ export default function SplitView({
             highlightedId={highlightedId}
             onSelect={onSelect}
             isVenueMode={isVenueMode}
+            radiusKm={radiusKm}
+            onRadiusChange={onRadiusChange}
           />
         </div>
       </div>

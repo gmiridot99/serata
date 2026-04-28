@@ -20,7 +20,14 @@ function PinIcon({ className }: { className?: string }) {
   )
 }
 
-const QUICK_CITIES = ['Milano', 'Roma', 'Torino', 'Bologna', 'Firenze', 'Napoli']
+const QUICK_CITIES: Location[] = [
+  { name: 'Milano',  lat: 45.4654, lng: 9.1859  },
+  { name: 'Roma',    lat: 41.9028, lng: 12.4964 },
+  { name: 'Torino',  lat: 45.0703, lng: 7.6869  },
+  { name: 'Bologna', lat: 44.4949, lng: 11.3426 },
+  { name: 'Firenze', lat: 43.7696, lng: 11.2558 },
+  { name: 'Napoli',  lat: 40.8518, lng: 14.2681 },
+]
 
 export default function LocationOverlay({ open, onClose, onSelect, onUseMyLocation }: Props) {
   if (!open) return null
@@ -34,7 +41,12 @@ export default function LocationOverlay({ open, onClose, onSelect, onUseMyLocati
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <span className="font-display font-black text-lg text-accent">serata</span>
-            <button onClick={onClose} className="text-muted hover:text-text text-sm">✕</button>
+            <button
+              onClick={onClose}
+              className="text-muted hover:text-text text-sm cursor-pointer transition-colors"
+            >
+              ✕
+            </button>
           </div>
 
           <LocationSearch
@@ -45,12 +57,13 @@ export default function LocationOverlay({ open, onClose, onSelect, onUseMyLocati
           <div className="flex flex-wrap gap-2 mt-4">
             {QUICK_CITIES.map((city) => (
               <button
-                key={city}
+                key={city.name}
                 className="px-4 py-2 rounded-xl bg-elev border border-border
-                  text-sm text-text hover:border-border-md transition-colors"
-                onClick={() => { onSelect({ name: city, lat: 0, lng: 0 }); onClose() }}
+                  text-sm text-text hover:border-border-md hover:bg-elev2
+                  transition-colors cursor-pointer active:scale-95"
+                onClick={() => { onSelect(city); onClose() }}
               >
-                {city}
+                {city.name}
               </button>
             ))}
           </div>
@@ -58,7 +71,8 @@ export default function LocationOverlay({ open, onClose, onSelect, onUseMyLocati
           <button
             onClick={() => { onUseMyLocation(); onClose() }}
             className="mt-3 w-full flex items-center gap-3 p-3 rounded-xl
-              bg-elev border border-border hover:border-border-md transition-colors"
+              bg-elev border border-border hover:border-border-md hover:bg-elev2
+              transition-colors cursor-pointer active:scale-[0.98]"
           >
             <div className="w-8 h-8 rounded-lg bg-accent-lo flex items-center justify-center shrink-0">
               <PinIcon className="w-4 h-4 text-accent" />
