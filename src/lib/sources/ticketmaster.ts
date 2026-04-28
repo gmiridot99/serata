@@ -141,7 +141,6 @@ export class TicketmasterSource implements EventSource {
 
     const params = new URLSearchParams({
       apikey: this.apiKey,
-      countryCode: 'IT',
       size: '50',
     })
 
