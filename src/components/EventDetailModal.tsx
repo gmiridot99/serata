@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Event, EventCategory, EventPrice } from '@/lib/types'
+import type { VenueEnrichment } from '@/lib/enrichVenue'
 
 const EventMiniMap = dynamic(() => import('./EventMiniMap'), { ssr: false })
 
@@ -84,7 +85,12 @@ type Props = {
   onClose: () => void
 }
 
+type EnrichStatus = 'idle' | 'loading' | 'done' | 'error'
+
 export default function EventDetailModal({ event, onClose }: Props) {
+  const [enrichStatus, setEnrichStatus] = useState<EnrichStatus>('idle')
+  const [enrichment, setEnrichment] = useState<VenueEnrichment | null>(null)
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -92,6 +98,27 @@ export default function EventDetailModal({ event, onClose }: Props) {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  useEffect(() => {
+    if (!event || event.source !== 'places') return
+    setEnrichStatus('loading')
+    setEnrichment(null)
+    const placeId = event.id.replace('places_', '')
+    fetch('/api/enrich-venue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ placeId, reviews: event.reviews ?? [] }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('failed')
+        return res.json() as Promise<VenueEnrichment>
+      })
+      .then((data) => {
+        setEnrichment(data)
+        setEnrichStatus('done')
+      })
+      .catch(() => setEnrichStatus('error'))
+  }, [event])
 
   if (!event) return null
 
@@ -151,6 +178,15 @@ export default function EventDetailModal({ event, onClose }: Props) {
         <div className="p-5 space-y-4">
           <h2 className="text-xl font-bold text-text leading-snug">{event.title}</h2>
 
+          {isPlace && event.rating && (
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">⭐ {event.rating}</span>
+              {event.reviewCount && (
+                <span className="text-sm text-muted">· {event.reviewCount} recensioni</span>
+              )}
+            </div>
+          )}
+
           <div className="bg-card rounded-2xl p-4 divide-y divide-border">
             {!isPlace && event.startTime && (
               <>
@@ -180,6 +216,46 @@ export default function EventDetailModal({ event, onClose }: Props) {
 
           {event.description && (
             <p className="text-muted text-sm leading-relaxed">{event.description}</p>
+          )}
+
+          {isPlace && enrichStatus === 'loading' && (
+            <div className="bg-card rounded-2xl p-4 space-y-2">
+              <div className="h-3 bg-elev rounded-full w-full animate-pulse" />
+              <div className="h-3 bg-elev rounded-full w-3/4 animate-pulse" />
+            </div>
+          )}
+
+          {isPlace && enrichStatus === 'done' && enrichment && (
+            <div className="space-y-3">
+              {enrichment.summary_it && (
+                <p className="text-sm text-muted leading-relaxed">{enrichment.summary_it}</p>
+              )}
+              {enrichment.vibe.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {enrichment.vibe.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {enrichment.best_for.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {enrichment.best_for.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-card text-bright text-xs px-2 py-0.5 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {hasCoords && <EventMiniMap venue={event.venue} />}

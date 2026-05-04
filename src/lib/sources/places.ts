@@ -9,6 +9,9 @@ type GooglePlace = {
   photos?: Array<{ name: string; widthPx: number; heightPx: number }>
   googleMapsUri: string
   priceLevel?: string
+  rating?: number
+  userRatingCount?: number
+  reviews?: Array<{ text: { text: string }; rating: number; authorAttribution: { displayName: string } }>
 }
 
 const TYPE_TO_CATEGORY: Record<string, EventCategory> = {
@@ -64,11 +67,14 @@ export function normalizePlaceToEvent(place: GooglePlace, apiKey: string): Event
     imageUrl,
     ticketUrl: place.googleMapsUri,
     source: 'places',
+    rating: place.rating,
+    reviewCount: place.userRatingCount,
+    reviews: place.reviews?.slice(0, 5).map((r) => r.text.text) ?? [],
   }
 }
 
 const FIELDS =
-  'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.photos,places.googleMapsUri,places.priceLevel'
+  'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.photos,places.googleMapsUri,places.priceLevel,places.rating,places.userRatingCount,places.reviews'
 
 export class PlacesSource implements EventSource {
   private apiKey: string
@@ -148,7 +154,7 @@ export class PlacesSource implements EventSource {
 
   async fetchById(id: string): Promise<Event | null> {
     const placeId = id.replace('places_', '')
-    const fields = 'id,displayName,formattedAddress,location,types,photos,googleMapsUri,priceLevel'
+    const fields = 'id,displayName,formattedAddress,location,types,photos,googleMapsUri,priceLevel,rating,userRatingCount,reviews'
     const res = await fetch(
       `https://places.googleapis.com/v1/places/${placeId}?fields=${fields}&key=${this.apiKey}`
     )

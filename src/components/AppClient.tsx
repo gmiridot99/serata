@@ -13,6 +13,7 @@ import SplitView from './SplitView'
 import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
 import VenueSearch from './VenueSearch'
+import RatingChips from './RatingChips'
 
 type MobileTab = 'events' | 'map' | 'venues'
 
@@ -33,8 +34,13 @@ function AppInner() {
 
   const [locationOpen, setLocationOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState<MobileTab>('events')
+  const [minRating, setMinRating] = useState(0)
 
   const isVenueMode = filters.mode === 'venues'
+
+  const visibleEvents = isVenueMode && minRating > 0
+    ? events.filter((e) => (e.rating ?? 0) >= minRating)
+    : events
 
   const eventDates = new Set(events.map((e) => e.date.slice(0, 10)))
 
@@ -111,10 +117,14 @@ function AppInner() {
         <div className="w-px h-5 bg-border mx-3 shrink-0" />
 
         {isVenueMode ? (
-          <VenueSearch
-            value={filters.q ?? ''}
-            onChange={(q) => setFilters({ ...filters, q: q || undefined })}
-          />
+          <>
+            <VenueSearch
+              value={filters.q ?? ''}
+              onChange={(q) => setFilters({ ...filters, q: q || undefined })}
+            />
+            <div className="w-px h-5 bg-border mx-3 shrink-0" />
+            <RatingChips value={minRating} onChange={setMinRating} />
+          </>
         ) : (
           <>
             <DateTabs
@@ -136,7 +146,7 @@ function AppInner() {
         <div className="flex-1" />
 
         <span className="text-xs text-muted shrink-0 tabular-nums">
-          {events.length} {isVenueMode ? 'locali' : 'eventi'}
+          {visibleEvents.length} {isVenueMode ? 'locali' : 'eventi'}
         </span>
       </header>
 
@@ -147,11 +157,12 @@ function AppInner() {
           <LocationChip location={location} onClick={() => setLocationOpen(true)} />
         </div>
         {isVenueMode ? (
-          <div className="px-4 pb-3 pt-1">
+          <div className="px-4 pb-3 pt-1 flex flex-col gap-2">
             <VenueSearch
               value={filters.q ?? ''}
               onChange={(q) => setFilters({ ...filters, q: q || undefined })}
             />
+            <RatingChips value={minRating} onChange={setMinRating} />
           </div>
         ) : (
           <>
@@ -173,7 +184,7 @@ function AppInner() {
       </header>
 
       <SplitView
-        events={events}
+        events={visibleEvents}
         loading={loading}
         city={location?.name}
         highlightedId={highlightedId}

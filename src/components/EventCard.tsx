@@ -56,9 +56,20 @@ export default function EventCard({ event, variant = 'row', highlighted, onHover
         <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <div className="flex items-end justify-between mb-1">
-            <span className="font-display font-black text-3xl text-text tracking-tighter leading-none">
-              {event.startTime}
-            </span>
+            {event.source === 'places' && event.rating ? (
+              <div className="flex flex-col leading-none">
+                <span className="font-display font-black text-3xl text-text tracking-tighter leading-none">
+                  ⭐ {event.rating}
+                </span>
+                {event.reviewCount && (
+                  <span className="text-xs text-bright mt-0.5">{event.reviewCount} recensioni</span>
+                )}
+              </div>
+            ) : (
+              <span className="font-display font-black text-3xl text-text tracking-tighter leading-none">
+                {event.startTime}
+              </span>
+            )}
             <span className={`text-sm font-bold ${isFree ? 'text-green-400' : 'text-accent'}`}>
               {priceDisplay}
             </span>
@@ -93,11 +104,24 @@ export default function EventCard({ event, variant = 'row', highlighted, onHover
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="font-display font-bold text-lg text-text tracking-tight leading-none">
-            {event.startTime}
-          </span>
-          {event.endTime && (
-            <span className="text-[10px] text-muted">→ {event.endTime}</span>
+          {event.source === 'places' && event.rating ? (
+            <>
+              <span className="font-display font-bold text-lg text-text tracking-tight leading-none">
+                ⭐ {event.rating}
+              </span>
+              {event.reviewCount && (
+                <span className="text-[10px] text-muted">· {event.reviewCount}</span>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="font-display font-bold text-lg text-text tracking-tight leading-none">
+                {event.startTime}
+              </span>
+              {event.endTime && (
+                <span className="text-[10px] text-muted">→ {event.endTime}</span>
+              )}
+            </>
           )}
         </div>
         <p className="text-[13px] font-medium text-text truncate mb-0.5">{event.title}</p>

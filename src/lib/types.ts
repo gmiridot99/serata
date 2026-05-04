@@ -22,6 +22,9 @@ export type Event = {
   imageUrl?: string
   ticketUrl: string
   source: string
+  rating?: number
+  reviewCount?: number
+  reviews?: string[]
 }
 
 export type Location = {
