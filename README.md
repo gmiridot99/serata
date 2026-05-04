@@ -12,9 +12,11 @@ perché ogni volta che voglio uscire devo aprire maps, instagram, dice, e altri 
 
 - cerca eventi e locali nella tua città (o dove sei)
 - filtra per data, categoria (club, concerti, aperitivi, teatro...), distanza, prezzo
+- modalità **venues**: locali con rating Google, filtro per stelle (3+ / 4+ / 4.5+)
+- apri un locale → AI genera un recap delle recensioni: vibe, rumorosità, età media, per cosa è adatto
 - vista lista + mappa affiancate su desktop
 - mobile first con bottom nav
-- dati da Google Maps e Ticketmaster
+- dati da Google Maps, Ticketmaster e altri
 
 ## screenshot
 
@@ -29,6 +31,7 @@ perché ogni volta che voglio uscire devo aprire maps, instagram, dice, e altri 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
 ![Google Maps](https://img.shields.io/badge/Google_Maps-4285F4?style=flat&logo=googlemaps&logoColor=white)
+![DeepSeek](https://img.shields.io/badge/DeepSeek_AI-4D6BFE?style=flat&logoColor=white)
 
 ## run locale
 
@@ -38,6 +41,15 @@ npm run dev
 ```
 
 apri [http://localhost:3000](http://localhost:3000)
+
+serve un file `.env.local` con:
+
+```
+GOOGLE_PLACES_API_KEY=...
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
+TICKETMASTER_API_KEY=...
+DEEPSEEK_API_KEY=...       # per i recap AI dei locali
+```
 
 ## roadmap (vibe)
 
