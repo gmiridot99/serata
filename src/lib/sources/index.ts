@@ -1,11 +1,18 @@
 import { cache } from 'react'
-import type { Event, EventQuery } from '@/lib/types'
+import type { Event, EventQuery, EventSource } from '@/lib/types'
 import { TicketmasterSource } from './ticketmaster'
 import { PlacesSource } from './places'
+import { ResidentAdvisorSource } from './residentadvisor'
+import { DiceSource } from './dice'
 import { expandVenueQuery } from '@/lib/venueExpand'
+import { deduplicateEvents } from '@/lib/dedup'
 
-const eventSources = [
+// Eventbrite: search API restricted to partners since 2023 — disabled
+// Bandsintown: v4 location search requires registered API key — disabled
+const eventSources: EventSource[] = [
   new TicketmasterSource(process.env.TICKETMASTER_API_KEY ?? ''),
+  new ResidentAdvisorSource(),
+  new DiceSource(),
 ]
 
 const placesSource = new PlacesSource(process.env.GOOGLE_PLACES_API_KEY ?? '')
@@ -21,9 +28,10 @@ export async function fetchEvents(query: EventQuery): Promise<Event[]> {
       console.error(`[sources] source[${i}] failed:`, r.reason)
     }
   })
-  return results
+  const events = results
     .filter((r): r is PromiseFulfilledResult<Event[]> => r.status === 'fulfilled')
     .flatMap((r) => r.value)
+  return deduplicateEvents(events)
 }
 
 export const fetchEventById = cache(async (id: string): Promise<Event | null> => {
