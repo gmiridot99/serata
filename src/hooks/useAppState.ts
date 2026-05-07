@@ -36,7 +36,7 @@ function parseFilters(params: URLSearchParams): Filters {
   const catVal = params.get('category')
   return {
     mode: modeVal === 'venues' ? 'venues' : 'events',
-    date: dateVal ?? undefined,
+    date: dateVal ?? 'today',
     q: params.get('q') ?? undefined,
     radiusKm: Math.max(1, parseInt(radiusVal ?? '10', 10) || 10),
     category: catVal ? (catVal.split(',') as EventCategory[]) : undefined,
