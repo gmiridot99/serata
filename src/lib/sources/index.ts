@@ -4,15 +4,16 @@ import { TicketmasterSource } from './ticketmaster'
 import { PlacesSource } from './places'
 import { ResidentAdvisorSource } from './residentadvisor'
 import { DiceSource } from './dice'
+import { EventbriteSource } from './eventbrite'
 import { expandVenueQuery } from '@/lib/venueExpand'
 import { deduplicateEvents } from '@/lib/dedup'
 
-// Eventbrite: search API restricted to partners since 2023 — disabled
 // Bandsintown: v4 location search requires registered API key — disabled
 const eventSources: EventSource[] = [
   new TicketmasterSource(process.env.TICKETMASTER_API_KEY ?? ''),
   new ResidentAdvisorSource(),
   new DiceSource(),
+  new EventbriteSource(),
 ]
 
 const placesSource = new PlacesSource(process.env.GOOGLE_PLACES_API_KEY ?? '')
