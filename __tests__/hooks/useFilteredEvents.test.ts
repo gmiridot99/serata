@@ -1,12 +1,6 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import type { Event } from '@/lib/types'
 
-const enrichTagsMock = jest.fn()
-
-jest.mock('@/lib/enrichTags', () => ({
-  enrichTags: (events: Event[]) => enrichTagsMock(events),
-}))
-
 import { useFilteredEvents } from '@/hooks/useFilteredEvents'
 import { tagCache } from '@/lib/tagCache'
 
@@ -20,11 +14,22 @@ function makeEvent(id: string, over: Partial<Event> = {}): Event {
   }
 }
 
+function mockFetchOnce(tags: Array<{ id: string; [k: string]: unknown }>) {
+  ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ tags }),
+  })
+}
+
 describe('useFilteredEvents', () => {
   beforeEach(() => {
-    enrichTagsMock.mockReset()
+    global.fetch = jest.fn()
     tagCache.clear()
     for (const k of ['a', 'b', 'c']) tagCache.set(k, {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   it('returns all events with no filters, no enrichment', async () => {
@@ -32,38 +37,38 @@ describe('useFilteredEvents', () => {
     const { result } = renderHook(() => useFilteredEvents(events, {}))
     expect(result.current.events).toHaveLength(2)
     expect(result.current.enriching).toBe(false)
-    expect(enrichTagsMock).not.toHaveBeenCalled()
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   it('does not enrich when only timeOfDay filter active', () => {
     const events = [makeEvent('a', { startTime: '19:00' })]
     renderHook(() => useFilteredEvents(events, { timeOfDay: ['aperitivo'] }))
-    expect(enrichTagsMock).not.toHaveBeenCalled()
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   it('triggers enrichment when setting filter active and cache miss', async () => {
-    enrichTagsMock.mockResolvedValueOnce(new Map([['a', { setting: 'outdoor' }]]))
+    mockFetchOnce([{ id: 'a', setting: 'outdoor' }])
     const events = [makeEvent('a')]
     const { result } = renderHook(() =>
       useFilteredEvents(events, { setting: 'outdoor' }),
     )
-    await waitFor(() => expect(enrichTagsMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(result.current.enriching).toBe(false))
     expect(result.current.events.map(e => e.id)).toEqual(['a'])
   })
 
   it('hits cache on second activation (no second call)', async () => {
-    enrichTagsMock.mockResolvedValueOnce(new Map([['a', { setting: 'outdoor' }]]))
+    mockFetchOnce([{ id: 'a', setting: 'outdoor' }])
     const events = [makeEvent('a')]
     const { rerender } = renderHook(
       ({ filters }: { filters: Parameters<typeof useFilteredEvents>[1] }) =>
         useFilteredEvents(events, filters),
       { initialProps: { filters: { setting: 'outdoor' as const } } as { filters: Parameters<typeof useFilteredEvents>[1] } },
     )
-    await waitFor(() => expect(enrichTagsMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
     rerender({ filters: {} })
     rerender({ filters: { setting: 'outdoor' } })
     await act(async () => {})
-    expect(enrichTagsMock).toHaveBeenCalledTimes(1)
+    expect(global.fetch).toHaveBeenCalledTimes(1)
   })
 })

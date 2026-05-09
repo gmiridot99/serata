@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Event } from '@/lib/types'
+import type { Event, VibeTags } from '@/lib/types'
 import { tagCache } from '@/lib/tagCache'
-import { enrichTags } from '@/lib/enrichTags'
 import { filterEvents, type VibeFilterInput } from '@/lib/filterEvents'
 
 export interface UseFilteredEventsResult {
@@ -45,8 +44,20 @@ export function useFilteredEvents(
     const handle = setTimeout(async () => {
       setEnriching(true)
       try {
-        const tags = await enrichTags(missing)
-        tagCache.setMany(tags)
+        const res = await fetch('/api/enrich-tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ events: missing }),
+        })
+        if (res.ok) {
+          const data = (await res.json()) as {
+            tags: Array<{ id: string } & VibeTags>
+          }
+          const tagsMap = new Map<string, VibeTags>(
+            data.tags.map(({ id, ...rest }) => [id, rest]),
+          )
+          tagCache.setMany(tagsMap)
+        }
       } finally {
         for (const id of ids) inflight.current.delete(id)
         setEnriching(false)
