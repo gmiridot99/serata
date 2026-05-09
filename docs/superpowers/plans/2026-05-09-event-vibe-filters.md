@@ -40,45 +40,45 @@
 - `src/hooks/useAppState.ts` — extend `Filters`, parse/serialize new URL params
 - `src/components/AppClient.tsx` — render `TimeOfDayChips` + drawer button + `FilterDrawer`
 - `package.json` — add `ai` dep
-- `.env.local.example` — add `AI_GATEWAY_API_KEY`
+- `.env.local` — add `DEEPSEEK_API_KEY` (gitignored, real value)
 
 ---
 
-## Task 1: Install AI SDK + env stub
+## Task 1: Install AI SDK + DeepSeek provider + env
 
 **Files:**
 - Modify: `package.json`
-- Modify: `.env.local.example`
+- Modify: `.env.local` (gitignored — local dev only)
 
-- [ ] **Step 1: Install AI SDK package**
+- [ ] **Step 1: Install AI SDK + DeepSeek provider**
 
 ```bash
-npm install ai@^6
+npm install ai@^6 @ai-sdk/deepseek
 ```
 
-- [ ] **Step 2: Add env stub**
+- [ ] **Step 2: Add env var to .env.local**
 
-Append to `.env.local.example`:
+Append to `.env.local` (NOT `.env.local.example` — we use the real local file directly):
 
 ```
-# AI Gateway for vibe filter enrichment (Step 8). Uses 'anthropic/claude-sonnet-4-6'.
+# DeepSeek API key for vibe filter enrichment (Task 9). Uses 'deepseek-chat'.
 # Without this key, only timeOfDay filter works; eventType/setting drawer is disabled.
-AI_GATEWAY_API_KEY=
+DEEPSEEK_API_KEY=<paste-real-key>
 ```
 
 - [ ] **Step 3: Verify install**
 
 ```bash
-npm ls ai
+npm ls ai @ai-sdk/deepseek
 ```
 
-Expected: prints `ai@6.x.x`. No peer warnings.
+Expected: prints `ai@6.x.x` and `@ai-sdk/deepseek@2.x.x`. No peer warnings.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add package.json package-lock.json .env.local.example
-git commit -m "chore: add ai sdk dep + AI_GATEWAY_API_KEY stub for vibe filters"
+git add package.json package-lock.json
+git commit -m "chore: add ai sdk + @ai-sdk/deepseek for vibe filter enrichment"
 ```
 
 ---
@@ -877,7 +877,7 @@ function makeEvent(id: string, over: Partial<Event> = {}): Event {
 describe('enrichTags', () => {
   beforeEach(() => {
     generateObjectMock.mockReset()
-    process.env.AI_GATEWAY_API_KEY = 'test-key'
+    process.env.DEEPSEEK_API_KEY = 'test-key'
   })
 
   it('returns empty Map when no events', async () => {
@@ -906,7 +906,7 @@ describe('enrichTags', () => {
   })
 
   it('returns empty Map when API key missing', async () => {
-    delete process.env.AI_GATEWAY_API_KEY
+    delete process.env.DEEPSEEK_API_KEY
     const { enrichTags } = await import('@/lib/enrichTags')
     const result = await enrichTags([makeEvent('a')])
     expect(result.size).toBe(0)
@@ -945,12 +945,13 @@ Create `src/lib/enrichTags.ts`:
 
 ```ts
 import { generateObject } from 'ai'
+import { deepseek } from '@ai-sdk/deepseek'
 import { z } from 'zod'
 import type { Event, VibeTags } from '@/lib/types'
 
 const BATCH_SIZE = 50
 const TIMEOUT_MS = 10_000
-const MODEL = 'anthropic/claude-sonnet-4-6'
+const MODEL = deepseek('deepseek-chat')
 
 const tagSchema = z.object({
   tags: z.array(
@@ -984,7 +985,7 @@ export async function enrichTags(events: Event[]): Promise<Map<string, VibeTags>
   const result = new Map<string, VibeTags>()
   if (events.length === 0) return result
 
-  if (!process.env.AI_GATEWAY_API_KEY) {
+  if (!process.env.DEEPSEEK_API_KEY) {
     return result
   }
 
@@ -1030,7 +1031,7 @@ Expected: PASS, 6 tests.
 
 ```bash
 git add src/lib/enrichTags.ts __tests__/lib/enrichTags.test.ts
-git commit -m "feat(vibe): LLM batch enrichTags via AI Gateway (Sonnet 4.6)"
+git commit -m "feat(vibe): LLM batch enrichTags via DeepSeek (deepseek-chat)"
 ```
 
 ---
@@ -1913,7 +1914,7 @@ Open browser to http://localhost:3000.
 
 - [ ] **Step 5: Test setting filter (LLM path)**
 
-Requires `AI_GATEWAY_API_KEY` in `.env.local`.
+Requires `DEEPSEEK_API_KEY` in `.env.local`.
 
 - Open drawer.
 - Click "Outdoor".
@@ -1924,7 +1925,7 @@ Requires `AI_GATEWAY_API_KEY` in `.env.local`.
 
 - [ ] **Step 6: Test fallback when API key missing**
 
-- Comment out `AI_GATEWAY_API_KEY` in `.env.local`.
+- Comment out `DEEPSEEK_API_KEY` in `.env.local`.
 - Restart dev server.
 - Open drawer, click "Outdoor", "Applica".
 - Verify visible list goes to 0 (silently dropped untagged) — acceptable; banner addition is out of scope.
@@ -1961,7 +1962,7 @@ git commit -m "fix(vibe): manual smoke fixes"
 
 ## Out-of-scope follow-ups (for future plans)
 
-- Disable drawer button + tooltip when `AI_GATEWAY_API_KEY` missing (UI affordance, not security)
+- Disable drawer button + tooltip when `DEEPSEEK_API_KEY` missing (UI affordance, not security)
 - Banner "Nessun risultato — riprova" when LLM-dependent filter active and visible == 0
 - Persist cache to Vercel Runtime Cache or Supabase
 - Analytics on filter usage

@@ -116,7 +116,7 @@ Note: i tag DICE/TM sono passati attraverso `Event` come è oggi — gli adapter
 
 `enrichTags.ts:enrichTags(events: Event[]): Promise<Map<string, VibeTags>>`
 
-- **Provider**: Vercel AI Gateway, model `'anthropic/claude-sonnet-4-6'` (string-based gateway routing, no `@ai-sdk/anthropic` import).
+- **Provider**: DeepSeek direct API via `@ai-sdk/deepseek`, model `deepseek('deepseek-chat')` (DeepSeek V3). API key from `DEEPSEEK_API_KEY` env var.
 - **Tool**: AI SDK `generateObject` con zod schema strutturato.
 - **Batch**: 50 eventi/call. Se input > 50, split in batch sequenziali.
 - **Timeout**: 10s per call, abort signal.
@@ -210,7 +210,7 @@ Ambiente                     [reset]
 | LLM timeout (>10s) | Abort, log `[vibeTags]`, untagged stay untagged. Filter drop untagged. Se risultato visibile == 0 e filter LLM-dependent attivo, banner "Nessun risultato — riprova" con retry button. |
 | LLM API error (rate limit/5xx) | Fallback come timeout + toast "Filtro AI temporaneamente non disponibile". |
 | LLM JSON malformed | Catch zod parse error, log, treat as empty result. |
-| `AI_GATEWAY_API_KEY` missing | Drawer button disabilitato + tooltip "Filtri AI non configurati". TimeOfDayChips funzionano comunque (nessuna LLM dependency). |
+| `DEEPSEEK_API_KEY` missing | Drawer button disabilitato + tooltip "Filtri AI non configurati". TimeOfDayChips funzionano comunque (nessuna LLM dependency). |
 | Network offline | Standard fetch error, drawer reset, toast. |
 
 Filtro `timeOfDay` mai dipende da LLM → resta operativo in qualsiasi failure mode.
