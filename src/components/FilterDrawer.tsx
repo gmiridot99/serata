@@ -55,7 +55,7 @@ export default function FilterDrawer({
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
           <section>
             <div className="flex items-center justify-between mb-2">
-              <span className="label">Tipo serata</span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">Tipo serata</span>
               <button onClick={() => setLocalTypes([])} className="text-xs text-muted">reset</button>
             </div>
             <EventTypeChips value={localTypes} onChange={setLocalTypes} />
@@ -63,7 +63,7 @@ export default function FilterDrawer({
 
           <section>
             <div className="flex items-center justify-between mb-2">
-              <span className="label">Ambiente</span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">Ambiente</span>
               <button onClick={() => setLocalSetting(undefined)} className="text-xs text-muted">reset</button>
             </div>
             <SettingChips value={localSetting} onChange={setLocalSetting} />
