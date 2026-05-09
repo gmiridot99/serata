@@ -184,6 +184,10 @@ function normalizeEvent(raw: DiceEvent): Event | null {
   const ticketUrl = raw.social_links?.event_share
     ?? (raw.perm_name ? `${DICE_HOST}/event/${raw.perm_name}` : DICE_HOST)
 
+  const sourceTags = (raw.tags_types ?? [])
+    .map(t => t.value)
+    .filter((v): v is string => typeof v === 'string')
+
   return {
     id: `dice_${raw.id}`,
     title: raw.name ?? '',
@@ -202,6 +206,7 @@ function normalizeEvent(raw: DiceEvent): Event | null {
     imageUrl: pickImage(raw.images),
     ticketUrl,
     source: 'dice',
+    sourceTags,
   }
 }
 
