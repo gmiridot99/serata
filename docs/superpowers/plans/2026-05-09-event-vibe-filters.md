@@ -58,7 +58,7 @@ npm install ai@^6 @ai-sdk/deepseek
 
 - [ ] **Step 2: Add env var to .env.local**
 
-Append to `.env.local` (NOT `.env.local.example` — we use the real local file directly):
+Append to `.env.local`:
 
 ```
 # DeepSeek API key for vibe filter enrichment (Task 9). Uses 'deepseek-chat'.
