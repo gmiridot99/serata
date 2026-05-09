@@ -225,6 +225,10 @@ function normalizeEvent(raw: EBEvent): Event | null {
   const startTime = raw.start_time ?? '00:00'
   const dateIso = `${raw.start_date}T${startTime}:00`
 
+  const sourceTags = (raw.tags ?? [])
+    .map(t => t.tag)
+    .filter((v): v is string => typeof v === 'string')
+
   return {
     id: `eb_${raw.id}`,
     title: raw.name,
@@ -243,6 +247,7 @@ function normalizeEvent(raw: EBEvent): Event | null {
     imageUrl: pickImage(raw.image),
     ticketUrl: raw.tickets_url ?? raw.url,
     source: 'eventbrite',
+    sourceTags,
   }
 }
 

@@ -164,6 +164,7 @@ function normalizeListing(listing: RAListing): Event {
     imageUrl: pickImageUrl(event?.images),
     ticketUrl: event?.contentUrl ? `https://ra.co${event.contentUrl}` : 'https://ra.co',
     source: 'ra',
+    sourceTags: ['music:dj'],
   }
 }
 
