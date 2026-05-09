@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { Event, EventCategory, Location } from '@/lib/types'
+import type { Event, EventCategory, EventType, Location, Setting, TimeOfDay } from '@/lib/types'
 
 export type Filters = {
   mode: 'events' | 'venues'
@@ -11,6 +11,9 @@ export type Filters = {
   q?: string          // venues mode keyword
   radiusKm: number    // default 10
   category?: EventCategory[]
+  timeOfDay?: TimeOfDay[]
+  eventType?: EventType[]
+  setting?: Setting
 }
 
 export type GeoStatus = 'pending' | 'granted' | 'denied'
@@ -34,12 +37,26 @@ function parseFilters(params: URLSearchParams): Filters {
   const dateVal = params.get('date')
   const radiusVal = params.get('radius')
   const catVal = params.get('category')
+  const todVal = params.get('tod')
+  const typeVal = params.get('etype')
+  const settingVal = params.get('setting')
+
+  const validTod: TimeOfDay[] = ['afternoon', 'aperitivo', 'dinner', 'late']
+  const validType: EventType[] = ['live', 'dj', 'festival', 'open-mic', 'silent-disco']
+
   return {
     mode: modeVal === 'venues' ? 'venues' : 'events',
     date: dateVal ?? 'today',
     q: params.get('q') ?? undefined,
     radiusKm: Math.max(1, parseInt(radiusVal ?? '10', 10) || 10),
     category: catVal ? (catVal.split(',') as EventCategory[]) : undefined,
+    timeOfDay: todVal
+      ? (todVal.split(',').filter(v => validTod.includes(v as TimeOfDay)) as TimeOfDay[])
+      : undefined,
+    eventType: typeVal
+      ? (typeVal.split(',').filter(v => validType.includes(v as EventType)) as EventType[])
+      : undefined,
+    setting: settingVal === 'indoor' || settingVal === 'outdoor' ? settingVal : undefined,
   }
 }
 
@@ -101,6 +118,9 @@ export function useAppState(): AppState {
       if (newFilters.q) params.set('q', newFilters.q)
       if (newFilters.radiusKm !== 10) params.set('radius', String(newFilters.radiusKm))
       if (newFilters.category?.length) params.set('category', newFilters.category.join(','))
+      if (newFilters.timeOfDay?.length) params.set('tod', newFilters.timeOfDay.join(','))
+      if (newFilters.eventType?.length) params.set('etype', newFilters.eventType.join(','))
+      if (newFilters.setting) params.set('setting', newFilters.setting)
       const qs = params.toString()
       router.replace(qs ? `/?${qs}` : '/', { scroll: false })
     },
