@@ -14,6 +14,9 @@ import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
 import VenueSearch from './VenueSearch'
 import RatingChips from './RatingChips'
+import TimeOfDayChips from './TimeOfDayChips'
+import FilterDrawer from './FilterDrawer'
+import { useFilteredEvents } from '@/hooks/useFilteredEvents'
 
 type MobileTab = 'events' | 'map' | 'venues'
 
@@ -35,12 +38,21 @@ function AppInner() {
   const [locationOpen, setLocationOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState<MobileTab>('events')
   const [minRating, setMinRating] = useState(0)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  const { events: filteredEvents, enriching } = useFilteredEvents(events, {
+    timeOfDay: filters.timeOfDay,
+    eventType: filters.eventType,
+    setting: filters.setting,
+  })
 
   const isVenueMode = filters.mode === 'venues'
 
   const visibleEvents = isVenueMode && minRating > 0
     ? events.filter((e) => (e.rating ?? 0) >= minRating)
-    : events
+    : isVenueMode
+      ? events
+      : filteredEvents
 
   const eventDates = new Set(events.map((e) => e.date.slice(0, 10)))
 
@@ -140,6 +152,28 @@ function AppInner() {
               value={filters.category}
               onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
             />
+
+            <div className="w-px h-5 bg-border mx-3 shrink-0" />
+
+            <TimeOfDayChips
+              value={filters.timeOfDay ?? []}
+              onChange={(timeOfDay) =>
+                setFilters({ ...filters, timeOfDay: timeOfDay.length ? timeOfDay : undefined })
+              }
+            />
+
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="ml-3 shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-[11px] font-medium"
+            >
+              ⚙ Filtri
+              {((filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
+                <span className="ml-1 text-accent">
+                  ({(filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)})
+                </span>
+              )}
+              {enriching && <span className="ml-1 animate-pulse">…</span>}
+            </button>
           </>
         )}
 
@@ -179,6 +213,25 @@ function AppInner() {
                 onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
               />
             </div>
+            <div className="flex items-center gap-2 px-4 pb-3">
+              <TimeOfDayChips
+                value={filters.timeOfDay ?? []}
+                onChange={(timeOfDay) =>
+                  setFilters({ ...filters, timeOfDay: timeOfDay.length ? timeOfDay : undefined })
+                }
+              />
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-[11px] font-medium"
+              >
+                ⚙
+                {((filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
+                  <span className="text-accent">
+                    {(filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)}
+                  </span>
+                )}
+              </button>
+            </div>
           </>
         )}
       </header>
@@ -208,6 +261,22 @@ function AppInner() {
       <EventDetailModal
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
+      />
+
+      <FilterDrawer
+        open={drawerOpen}
+        eventType={filters.eventType ?? []}
+        setting={filters.setting}
+        previewCount={visibleEvents.length}
+        onApply={({ eventType, setting }) => {
+          setFilters({
+            ...filters,
+            eventType: eventType.length ? eventType : undefined,
+            setting,
+          })
+          setDrawerOpen(false)
+        }}
+        onClose={() => setDrawerOpen(false)}
       />
     </div>
   )
