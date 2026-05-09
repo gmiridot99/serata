@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^2.0.34",
     "@anthropic-ai/sdk": "^0.92.0",
     "@vis.gl/react-google-maps": "^1.8.3",
     "ai": "^6.0.177",
