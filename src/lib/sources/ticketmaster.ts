@@ -58,6 +58,12 @@ function buildVenueAddress(venue: TmVenue): string {
 export function normalizeEvent(raw: TmEvent): Event {
   const venue = raw._embedded?.venues?.[0]
 
+  const sourceTags: string[] = []
+  for (const c of raw.classifications ?? []) {
+    if (c.segment?.name) sourceTags.push(c.segment.name)
+    if (c.genre?.name) sourceTags.push(c.genre.name)
+  }
+
   return {
     id: `tm_${raw.id}`,
     title: raw.name,
@@ -83,6 +89,7 @@ export function normalizeEvent(raw: TmEvent): Event {
     imageUrl: pickLargestImage(raw.images),
     ticketUrl: raw.url,
     source: 'ticketmaster',
+    sourceTags,
   }
 }
 

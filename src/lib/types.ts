@@ -25,6 +25,7 @@ export type Event = {
   rating?: number
   reviewCount?: number
   reviews?: string[]
+  sourceTags?: string[] // raw tag strings from upstream source (e.g., 'music:dj')
 }
 
 export type Location = {
@@ -48,4 +49,20 @@ export type EventQuery = {
 export interface EventSource {
   fetch(query: EventQuery): Promise<Event[]>
   fetchById?(id: string): Promise<Event | null>
+}
+
+export type TimeOfDay = 'afternoon' | 'aperitivo' | 'dinner' | 'late'
+
+export type EventType =
+  | 'live'
+  | 'dj'
+  | 'festival'
+  | 'open-mic'
+  | 'silent-disco'
+
+export type Setting = 'indoor' | 'outdoor'
+
+export interface VibeTags {
+  eventType?: EventType[]
+  setting?: Setting
 }
