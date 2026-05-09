@@ -48,8 +48,14 @@ export function extractRuleTags(event: Event): VibeTags {
       // EB category 103 = Music. We don't differentiate dj/live from EB tags
       // reliably — leave for LLM unless title gives a hint above.
       break
+    default:
+      // bandsintown, mock, places, and any future sources fall through here.
+      // No rule-based tags — LLM enrichment handles them downstream.
+      break
   }
 
+  // Gate intentional: title alone (e.g. Eventbrite "Festival X") doesn't produce
+  // festival without at least one other type signal. Keeps festival paired with dj/live.
   if (FESTIVAL_RE.test(event.title) && types.size > 0) {
     types.add('festival')
   }

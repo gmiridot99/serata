@@ -6,7 +6,6 @@ import { APIProvider } from '@vis.gl/react-google-maps'
 import { useAppState } from '@/hooks/useAppState'
 import ModeToggle from './ModeToggle'
 import DateTabs from './DateTabs'
-import CategoryChips from './CategoryChips'
 import LocationChip from './LocationChip'
 import LocationOverlay from './LocationOverlay'
 import SplitView from './SplitView'
@@ -14,7 +13,6 @@ import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
 import VenueSearch from './VenueSearch'
 import RatingChips from './RatingChips'
-import TimeOfDayChips from './TimeOfDayChips'
 import FilterDrawer from './FilterDrawer'
 import { useFilteredEvents } from '@/hooks/useFilteredEvents'
 
@@ -146,30 +144,14 @@ function AppInner() {
               location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
             />
 
-            <div className="w-px h-5 bg-border mx-3 shrink-0" />
-
-            <CategoryChips
-              value={filters.category}
-              onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
-            />
-
-            <div className="w-px h-5 bg-border mx-3 shrink-0" />
-
-            <TimeOfDayChips
-              value={filters.timeOfDay ?? []}
-              onChange={(timeOfDay) =>
-                setFilters({ ...filters, timeOfDay: timeOfDay.length ? timeOfDay : undefined })
-              }
-            />
-
             <button
               onClick={() => setDrawerOpen(true)}
               className="ml-3 shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-[11px] font-medium"
             >
               ⚙ Filtri
-              {((filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
+              {((filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
                 <span className="ml-1 text-accent">
-                  ({(filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)})
+                  ({(filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)})
                 </span>
               )}
               {enriching && <span className="ml-1 animate-pulse">…</span>}
@@ -200,34 +182,21 @@ function AppInner() {
           </div>
         ) : (
           <>
-            <DateTabs
-              value={filters.date}
-              onChange={(date) => setFilters({ ...filters, date })}
-              className="px-4"
-              eventDates={eventDates}
-              location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
-            />
             <div className="flex items-center gap-2 px-4 pb-3 pt-1">
-              <CategoryChips
-                value={filters.category}
-                onChange={(category) => setFilters({ ...filters, category: category.length ? category : undefined })}
-              />
-            </div>
-            <div className="flex items-center gap-2 px-4 pb-3">
-              <TimeOfDayChips
-                value={filters.timeOfDay ?? []}
-                onChange={(timeOfDay) =>
-                  setFilters({ ...filters, timeOfDay: timeOfDay.length ? timeOfDay : undefined })
-                }
+              <DateTabs
+                value={filters.date}
+                onChange={(date) => setFilters({ ...filters, date })}
+                eventDates={eventDates}
+                location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
               />
               <button
                 onClick={() => setDrawerOpen(true)}
                 className="shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-[11px] font-medium"
               >
                 ⚙
-                {((filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
+                {((filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
                   <span className="text-accent">
-                    {(filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)}
+                    {(filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -265,12 +234,13 @@ function AppInner() {
 
       <FilterDrawer
         open={drawerOpen}
+        timeOfDay={filters.timeOfDay ?? []}
         eventType={filters.eventType ?? []}
         setting={filters.setting}
-        previewCount={visibleEvents.length}
-        onApply={({ eventType, setting }) => {
+        onApply={({ timeOfDay, eventType, setting }) => {
           setFilters({
             ...filters,
+            timeOfDay: timeOfDay.length ? timeOfDay : undefined,
             eventType: eventType.length ? eventType : undefined,
             setting,
           })
