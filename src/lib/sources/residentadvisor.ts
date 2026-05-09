@@ -26,8 +26,6 @@ type RAVenue = {
   name?: string | null
   address?: string | null
   area?: { name?: string | null } | null
-  lat?: number | null
-  lng?: number | null
 }
 
 type RAEvent = {
@@ -78,8 +76,6 @@ const EVENT_LISTINGS_QUERY = `
             name
             address
             area { name }
-            lat
-            lng
           }
           images { filename type }
           cost
@@ -136,7 +132,7 @@ function pickImageUrl(images: RAImage[] | null | undefined): string | undefined 
   return img?.filename ? `https://img.ra.co/${img.filename}` : undefined
 }
 
-function normalizeListing(listing: RAListing): Event {
+function normalizeListing(listing: RAListing, fallbackLat: number, fallbackLng: number): Event {
   const event = listing.event
   const venue = event?.venue
 
@@ -157,8 +153,8 @@ function normalizeListing(listing: RAListing): Event {
     venue: {
       name: venue?.name ?? '',
       address: venue?.address ?? (venue?.area?.name ?? ''),
-      lat: venue?.lat ?? 0,
-      lng: venue?.lng ?? 0,
+      lat: fallbackLat,
+      lng: fallbackLng,
     },
     price: parsePrice(event?.cost),
     imageUrl: pickImageUrl(event?.images),
@@ -231,6 +227,8 @@ export class ResidentAdvisorSource implements EventSource {
     }
 
     const listings = json.data?.eventListings?.data ?? []
-    return listings.filter((l): l is RAListing => !!l).map(normalizeListing)
+    const fallbackLat = query.lat ?? 0
+    const fallbackLng = query.lng ?? 0
+    return listings.filter((l): l is RAListing => !!l).map(l => normalizeListing(l, fallbackLat, fallbackLng))
   }
 }

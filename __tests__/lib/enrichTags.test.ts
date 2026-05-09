@@ -44,10 +44,10 @@ describe('enrichTags', () => {
     expect(result.get('a')).toEqual({ eventType: ['dj'], setting: 'outdoor' })
   })
 
-  it('splits batches >50 into multiple calls', async () => {
+  it('splits batches >15 into multiple calls', async () => {
     const { enrichTags } = await import('@/lib/enrichTags')
     generateObjectMock.mockResolvedValue({ object: { tags: [] } })
-    const events = Array.from({ length: 75 }, (_, i) => makeEvent(`e${i}`))
+    const events = Array.from({ length: 30 }, (_, i) => makeEvent(`e${i}`))
     await enrichTags(events)
     expect(generateObjectMock).toHaveBeenCalledTimes(2)
   })

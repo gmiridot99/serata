@@ -19,6 +19,7 @@ export function useFilteredEvents(
   const [enriching, setEnriching] = useState(false)
   const [tick, setTick] = useState(0)
   const inflight = useRef<Set<string>>(new Set())
+  const failed = useRef<Set<string>>(new Set())
 
   const needsLLM =
     (filters.eventType && filters.eventType.length > 0) ||
@@ -33,7 +34,7 @@ export function useFilteredEvents(
       const needType =
         Boolean(filters.eventType?.length) &&
         !(cached?.eventType && cached.eventType.length > 0)
-      return (needSetting || needType) && !inflight.current.has(e.id)
+      return (needSetting || needType) && !inflight.current.has(e.id) && !failed.current.has(e.id)
     })
 
     if (missing.length === 0) return
@@ -58,6 +59,13 @@ export function useFilteredEvents(
           )
           tagCache.setMany(tagsMap)
         }
+        // IDs that came back without tags will never be enriched — mark to stop retrying
+        for (const id of ids) {
+          if (!tagCache.get(id)) failed.current.add(id)
+        }
+      } catch (err) {
+        for (const id of ids) failed.current.add(id)
+        console.error('[useFilteredEvents] enrich failed, skipping retry:', err)
       } finally {
         for (const id of ids) inflight.current.delete(id)
         setEnriching(false)
