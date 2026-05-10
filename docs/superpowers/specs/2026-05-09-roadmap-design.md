@@ -184,6 +184,36 @@ Added to `eventSources` array in `src/lib/sources/index.ts`. Gated behind `INSTA
 
 ---
 
+## Phase 4 — Source City Coverage
+
+*Medium priority. Existing sources are capped to specific cities — expand reach.*
+
+### 4A · Audit current city caps
+
+Per source (`residentadvisor`, `dice`, `eventbrite`, `ticketmaster`, `bandsintown`, `places`), document:
+- Which cities/areas the source currently fetches
+- Where the cap is enforced (hardcoded city list, geocode → area lookup, source-specific area IDs)
+- Failure mode when query city is outside the cap (silent empty, error, fallback to nearest)
+
+Output: short table in `docs/sources-coverage.md`.
+
+### 4B · Expand RA area coverage
+
+Resident Advisor uses area IDs (e.g. Milano = 13). Build a mapping `cityName → areaId` covering at least: Milano, Roma, Torino, Bologna, Firenze, Napoli, Padova, Verona, Genova, Bari. Fallback: nearest-area lookup based on lat/lng when city not in map.
+
+### 4C · Expand other sources
+
+For each source, lift any hardcoded single-city or small-region constraint:
+- Use the `EventQuery` lat/lng/radiusKm if the source supports geo queries
+- Otherwise build a city → source-id mapping for top-N Italian cities
+- Document remaining gaps (sources that genuinely don't cover Italian nightlife outside major hubs)
+
+### 4D · Instagram source coverage (ties into Phase 2)
+
+When 2D lands, ensure venue list comes from Google Places for the requested city — not gated to a default city.
+
+---
+
 ## Non-Goals
 
 - Facebook Events (API requires business verification)

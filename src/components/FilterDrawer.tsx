@@ -12,10 +12,11 @@ type Props = {
   setting: Setting | undefined
   onApply: (next: { timeOfDay: TimeOfDay[]; eventType: EventType[]; setting: Setting | undefined }) => void
   onClose: () => void
+  previewCount?: (pending: { timeOfDay: TimeOfDay[]; eventType: EventType[]; setting: Setting | undefined }) => number
 }
 
 export default function FilterDrawer({
-  open, timeOfDay, eventType, setting, onApply, onClose,
+  open, timeOfDay, eventType, setting, onApply, onClose, previewCount,
 }: Props) {
   const [localTimeOfDay, setLocalTimeOfDay] = useState<TimeOfDay[]>(timeOfDay)
   const [localTypes, setLocalTypes] = useState<EventType[]>(eventType)
@@ -40,6 +41,12 @@ export default function FilterDrawer({
   function apply() {
     onApply({ timeOfDay: localTimeOfDay, eventType: localTypes, setting: localSetting })
   }
+
+  const pendingCount = previewCount?.({
+    timeOfDay: localTimeOfDay,
+    eventType: localTypes,
+    setting: localSetting,
+  })
 
   return (
     <div
@@ -93,7 +100,7 @@ export default function FilterDrawer({
             onClick={apply}
             className="flex-1 px-3 py-2 rounded-full bg-accent text-white text-sm font-medium"
           >
-            Applica
+            {pendingCount !== undefined ? `Mostra ${pendingCount} risultati` : 'Applica'}
           </button>
         </div>
       </div>

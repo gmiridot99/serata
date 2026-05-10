@@ -1,20 +1,42 @@
 import type { Event, EventCategory, EventQuery, EventSource } from '@/lib/types'
 
-// RA area IDs for Italian cities
-const AREA_IDS: { substrings: string[]; id: number }[] = [
-  { substrings: ['milan', 'milano'], id: 47 },
-  { substrings: ['roma', 'rome'], id: 176 },
-  { substrings: ['torin'], id: 249 },
+// RA area IDs for Italian cities. Each entry pinned to canonical lat/lng so we
+// can do nearest-area fallback when the user's city isn't in the substring map.
+// IDs verified against ra.co GraphQL areas endpoint.
+type RAArea = { substrings: string[]; id: number; lat: number; lng: number }
+
+const AREAS: RAArea[] = [
+  { substrings: ['milan', 'milano'], id: 47,  lat: 45.4642, lng: 9.1900 },
+  { substrings: ['roma', 'rome'],     id: 176, lat: 41.9028, lng: 12.4964 },
+  { substrings: ['torin', 'turin'],   id: 249, lat: 45.0703, lng: 7.6869 },
 ]
 
-const DEFAULT_AREA_ID = 47
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371
+  const dLat = (b.lat - a.lat) * Math.PI / 180
+  const dLng = (b.lng - a.lng) * Math.PI / 180
+  const lat1 = a.lat * Math.PI / 180
+  const lat2 = b.lat * Math.PI / 180
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2)
+  return 2 * R * Math.asin(Math.sqrt(h))
+}
 
-function resolveAreaId(city: string): number {
+function resolveAreaId(city: string, lat?: number, lng?: number): number | null {
   const lower = city.toLowerCase()
-  for (const entry of AREA_IDS) {
+  for (const entry of AREAS) {
     if (entry.substrings.some(s => lower.includes(s))) return entry.id
   }
-  return DEFAULT_AREA_ID
+  // Nearest-area fallback by coords. Avoids silently routing every unknown
+  // city to Milano (previous behavior). Cap at 200km to skip far-away matches.
+  if (lat !== undefined && lng !== undefined) {
+    let best: { id: number; km: number } | null = null
+    for (const a of AREAS) {
+      const km = haversineKm({ lat, lng }, a)
+      if (!best || km < best.km) best = { id: a.id, km }
+    }
+    if (best && best.km <= 200) return best.id
+  }
+  return null
 }
 
 type RAImage = {
@@ -129,7 +151,8 @@ function parsePrice(cost: string | null | undefined): Event['price'] {
 function pickImageUrl(images: RAImage[] | null | undefined): string | undefined {
   if (!images || images.length === 0) return undefined
   const img = images.find(i => i.filename)
-  return img?.filename ? `https://img.ra.co/${img.filename}` : undefined
+  if (!img?.filename) return undefined
+  return img.filename.startsWith('http') ? img.filename : `https://images.ra.co/${img.filename}`
 }
 
 function normalizeListing(listing: RAListing, fallbackLat: number, fallbackLng: number): Event {
@@ -177,7 +200,8 @@ export class ResidentAdvisorSource implements EventSource {
       return []
     }
 
-    const areaId = resolveAreaId(query.city)
+    const areaId = resolveAreaId(query.city, query.lat, query.lng)
+    if (areaId === null) return []
 
     let gte: string
     let lte: string

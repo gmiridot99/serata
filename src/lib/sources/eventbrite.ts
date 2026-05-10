@@ -211,7 +211,8 @@ function parsePrice(t: EBTicketAvailability | undefined): Event['price'] {
 
 function pickImage(img: EBImage | undefined): string | undefined {
   if (!img) return undefined
-  return img.image_sizes?.medium ?? img.image_sizes?.large ?? img.url
+  const url = img.image_sizes?.medium ?? img.image_sizes?.large ?? img.url
+  return url?.startsWith('https://') ? url : undefined
 }
 
 function normalizeEvent(raw: EBEvent): Event | null {

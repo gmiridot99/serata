@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+import { useState } from 'react'
 import { Event, EventCategory } from '@/lib/types'
 
 const CATEGORY_COLORS: Record<EventCategory, string> = {
@@ -36,6 +38,8 @@ type Props = {
 export default function EventCard({ event, variant = 'row', highlighted, onHover, onHoverEnd, onClick }: Props) {
   const { text: priceDisplay, free: isFree } = formatPrice(event.price)
   const catColor = CATEGORY_COLORS[event.category]
+  const [imgFailed, setImgFailed] = useState(false)
+  const showImage = !!event.imageUrl && !imgFailed
 
   if (variant === 'featured') {
     return (
@@ -47,9 +51,16 @@ export default function EventCard({ event, variant = 'row', highlighted, onHover
         onMouseLeave={onHoverEnd}
         onClick={onClick}
       >
-        {event.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+        {showImage ? (
+          <Image
+            src={event.imageUrl!}
+            alt={event.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 420px"
+            className="object-cover"
+            unoptimized={false}
+            onError={() => setImgFailed(true)}
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-card to-bg" />
         )}
@@ -95,9 +106,15 @@ export default function EventCard({ event, variant = 'row', highlighted, onHover
       onClick={onClick}
     >
       <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative">
-        {event.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+        {showImage ? (
+          <Image
+            src={event.imageUrl!}
+            alt={event.title}
+            fill
+            sizes="48px"
+            className="object-cover"
+            onError={() => setImgFailed(true)}
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-card to-bg" />
         )}

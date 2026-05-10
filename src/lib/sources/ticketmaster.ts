@@ -45,7 +45,8 @@ function mapCategory(classifications?: TmEvent['classifications']): EventCategor
 
 function pickLargestImage(images?: TmEvent['images']): string | undefined {
   if (!images || images.length === 0) return undefined
-  return images.reduce((best, img) => (img.width > best.width ? img : best)).url
+  const url = images.reduce((best, img) => (img.width > best.width ? img : best)).url
+  return url?.startsWith('https://') ? url : undefined
 }
 
 function buildVenueAddress(venue: TmVenue): string {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { Event, EventCategory, EventPrice } from '@/lib/types'
 import type { VenueEnrichment } from '@/lib/enrichVenue'
 
@@ -90,6 +91,7 @@ type EnrichStatus = 'idle' | 'loading' | 'done' | 'error'
 export default function EventDetailModal({ event, onClose }: Props) {
   const [enrichStatus, setEnrichStatus] = useState<EnrichStatus>('idle')
   const [enrichment, setEnrichment] = useState<VenueEnrichment | null>(null)
+  const [imgFailed, setImgFailed] = useState(false)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -150,9 +152,15 @@ export default function EventDetailModal({ event, onClose }: Props) {
 
         {/* Hero */}
         <div className="relative h-56 w-full overflow-hidden shrink-0">
-          {event.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+          {event.imageUrl && !imgFailed ? (
+            <Image
+              src={event.imageUrl}
+              alt={event.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 600px"
+              className="object-cover"
+              onError={() => setImgFailed(true)}
+            />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-card to-bg" />
           )}

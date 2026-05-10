@@ -12,9 +12,20 @@ import SplitView from './SplitView'
 import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
 import VenueSearch from './VenueSearch'
+import EventSearch from './EventSearch'
+import RecommendationsPanel from './RecommendationsPanel'
 import RatingChips from './RatingChips'
 import FilterDrawer from './FilterDrawer'
 import { useFilteredEvents } from '@/hooks/useFilteredEvents'
+import { serializeEventsForLLM } from '@/lib/serializeEvents'
+import { filterEvents } from '@/lib/filterEvents'
+import { tagCache } from '@/lib/tagCache'
+import type { TimeOfDay, EventType, Setting } from '@/lib/types'
+
+type SearchResult = {
+  rankedIds: string[]
+  reasons: Record<string, string>
+}
 
 type MobileTab = 'events' | 'map' | 'venues'
 
@@ -37,6 +48,8 @@ function AppInner() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('events')
   const [minRating, setMinRating] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
 
   const { events: filteredEvents, enriching } = useFilteredEvents(events, {
     timeOfDay: filters.timeOfDay,
@@ -77,6 +90,55 @@ function AppInner() {
     if (mode === 'venues') setMobileTab('venues')
     else setMobileTab('events')
   }
+
+  async function handleSearchSubmit(query: string) {
+    if (searching) return
+    setSearching(true)
+    try {
+      const payload = serializeEventsForLLM(visibleEvents)
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, events: payload }),
+      })
+      if (!res.ok) {
+        setSearchResult({ rankedIds: [], reasons: {} })
+        return
+      }
+      const data = (await res.json()) as {
+        filters?: {
+          timeOfDay?: TimeOfDay[]
+          eventType?: EventType[]
+          setting?: Setting
+        }
+        rankedIds?: string[]
+        reasons?: Record<string, string>
+      }
+      const f = data.filters ?? {}
+      setFilters({
+        ...filters,
+        timeOfDay: f.timeOfDay && f.timeOfDay.length ? f.timeOfDay : undefined,
+        eventType: f.eventType && f.eventType.length ? f.eventType : undefined,
+        setting: f.setting,
+      })
+      setSearchResult({
+        rankedIds: data.rankedIds ?? [],
+        reasons: data.reasons ?? {},
+      })
+    } catch (err) {
+      console.error('[search] failed:', err)
+      setSearchResult({ rankedIds: [], reasons: {} })
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const recommendedEvents = searchResult
+    ? searchResult.rankedIds
+        .slice(0, 5)
+        .map((id) => events.find((e) => e.id === id))
+        .filter((e): e is NonNullable<typeof e> => Boolean(e))
+    : []
 
   function handleUseMyLocation() {
     if (!navigator.geolocation) {
@@ -137,6 +199,8 @@ function AppInner() {
           </>
         ) : (
           <>
+            <EventSearch onSubmit={handleSearchSubmit} loading={searching} />
+            <div className="w-px h-5 bg-border mx-3 shrink-0" />
             <DateTabs
               value={filters.date}
               onChange={(date) => setFilters({ ...filters, date })}
@@ -182,7 +246,10 @@ function AppInner() {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-2 px-4 pb-3 pt-1">
+            <div className="px-4 pt-1">
+              <EventSearch onSubmit={handleSearchSubmit} loading={searching} />
+            </div>
+            <div className="flex items-center gap-2 px-4 pb-3 pt-2">
               <DateTabs
                 value={filters.date}
                 onChange={(date) => setFilters({ ...filters, date })}
@@ -204,6 +271,15 @@ function AppInner() {
           </>
         )}
       </header>
+
+      {!isVenueMode && searchResult && (
+        <RecommendationsPanel
+          events={recommendedEvents}
+          reasons={searchResult.reasons}
+          onSelect={setSelectedEvent}
+          onDismiss={() => setSearchResult(null)}
+        />
+      )}
 
       <SplitView
         events={visibleEvents}
@@ -247,6 +323,7 @@ function AppInner() {
           setDrawerOpen(false)
         }}
         onClose={() => setDrawerOpen(false)}
+        previewCount={(pending) => filterEvents(events, pending, tagCache).length}
       />
     </div>
   )
