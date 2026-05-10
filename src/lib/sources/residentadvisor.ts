@@ -2,14 +2,26 @@ import type { Event, EventCategory, EventQuery, EventSource } from '@/lib/types'
 
 // RA area IDs for Italian cities. Each entry pinned to canonical lat/lng so we
 // can do nearest-area fallback when the user's city isn't in the substring map.
-// IDs verified against ra.co GraphQL areas endpoint.
+// IDs verified 2026-05-10 via ra.co GraphQL `areas(searchTerm:...)` query.
+// Previous IDs (47, 176, 249) pointed to Las Vegas / Amsterdam / empty —
+// callers got cross-region pollution masquerading as IT events.
 type RAArea = { substrings: string[]; id: number; lat: number; lng: number }
 
 const AREAS: RAArea[] = [
-  { substrings: ['milan', 'milano'], id: 47,  lat: 45.4642, lng: 9.1900 },
-  { substrings: ['roma', 'rome'],     id: 176, lat: 41.9028, lng: 12.4964 },
-  { substrings: ['torin', 'turin'],   id: 249, lat: 45.0703, lng: 7.6869 },
+  { substrings: ['milan', 'milano'],     id: 347, lat: 45.4642, lng: 9.1900 },
+  { substrings: ['roma', 'rome'],        id: 351, lat: 41.9028, lng: 12.4964 },
+  { substrings: ['torin', 'turin'],      id: 348, lat: 45.0703, lng: 7.6869 },
+  { substrings: ['bologna'],             id: 350, lat: 44.4949, lng: 11.3426 },
+  { substrings: ['firenze', 'florence'], id: 352, lat: 43.7696, lng: 11.2558 },
+  { substrings: ['venezia', 'venice'],   id: 349, lat: 45.4408, lng: 12.3155 },
+  { substrings: ['napoli', 'naples'],    id: 406, lat: 40.8518, lng: 14.2681 },
 ]
+
+// km cap for nearest-area fallback. 80km = ~Como/Bergamo/Lecco still match
+// Milano, but Trento/Norcia/Aosta no longer get cross-region RA results
+// presented as local. Tightened from 200km on 2026-05-10 after smoke test
+// showed users in remote provinces seeing distant-city events.
+const NEAREST_AREA_CAP_KM = 80
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371
@@ -34,7 +46,7 @@ function resolveAreaId(city: string, lat?: number, lng?: number): number | null 
       const km = haversineKm({ lat, lng }, a)
       if (!best || km < best.km) best = { id: a.id, km }
     }
-    if (best && best.km <= 200) return best.id
+    if (best && best.km <= NEAREST_AREA_CAP_KM) return best.id
   }
   return null
 }
@@ -222,9 +234,11 @@ export class ResidentAdvisorSource implements EventSource {
       lte = toYMD(future)
     }
 
+    // RA filter syntax: `{eq: id}` — `{id: ...}` is silently ignored and
+    // returns global unfiltered listings (cross-region pollution).
     const variables = {
       filters: {
-        areas: { id: areaId },
+        areas: { eq: areaId },
         listingDate: { gte, lte },
       },
       pageSize: 50,

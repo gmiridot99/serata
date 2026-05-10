@@ -10,17 +10,14 @@ const DICE_API = 'https://api.dice.fm'
 // Map keyed by DICE perm_name → list of Italian-native aliases the user may
 // type. matchesCity() looks up by perm_name, so the key must be the canonical
 // DICE slug (English-ish) and the values are the localized variants.
+// Verified 2026-05-10 via api.dice.fm/cities: only 4 IT cities exist on DICE
+// (milano, roma, napoli/Napoli, bologna). Aliases for turin/florence/venice/
+// genoa/padua were dead code — those cities don't exist in DICE's catalog.
 const CITY_ALIASES: Record<string, string[]> = {
-  milan:    ['milano'],
-  rome:     ['roma'],
-  naples:   ['napoli'],
-  turin:    ['torino'],
-  florence: ['firenze'],
-  venice:   ['venezia'],
-  genoa:    ['genova'],
-  padua:    ['padova'],
-  // Bologna, Verona, Bari, Palermo, Catania, Trieste, Bergamo, Brescia
-  // canonical perm_name == Italian native — no alias needed.
+  milano: ['milan'],
+  roma:   ['rome'],
+  napoli: ['naples'],
+  // bologna: perm_name == Italian native — no alias needed
 }
 
 type DiceVenue = {
