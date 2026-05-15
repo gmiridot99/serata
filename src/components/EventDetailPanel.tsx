@@ -96,7 +96,7 @@ export default function EventDetailPanel({ event, onClose }: Props) {
   const showImage = !!event.imageUrl && !imgFailed
 
   return (
-    <div className="hidden md:flex flex-col fixed right-0 top-0 bottom-0 z-50 w-[460px] bg-bg border-l border-border overflow-hidden">
+    <div className="hidden md:flex flex-col fixed right-0 top-0 bottom-0 z-[60] w-[460px] bg-bg border-l border-border overflow-hidden shadow-panel">
       <div className="flex items-center px-5 py-3 border-b border-border shrink-0">
         <button
           onClick={onClose}

@@ -42,12 +42,8 @@ export default function MapSheet({
 
   return (
     <>
-      {/* Desktop: left 40% clickable area to close */}
-      <div
-        className="hidden md:block fixed inset-0 z-40"
-        style={{ right: '60%' }}
-        onClick={onClose}
-      />
+      {/* Mobile backdrop */}
+      <div className="md:hidden fixed inset-0 z-40 bg-black/40" onClick={onClose} />
 
       {/* Sheet — mobile: full screen slide-up; desktop: right 60% slide-right */}
       <div className={[
