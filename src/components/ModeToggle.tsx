@@ -1,28 +1,28 @@
+'use client'
+
+type Mode = 'events' | 'venues'
+
 type Props = {
-  mode: 'events' | 'venues'
-  onChange: (mode: 'events' | 'venues') => void
-  className?: string
+  mode: Mode
+  onChange: (mode: Mode) => void
 }
 
-export default function ModeToggle({ mode, onChange, className }: Props) {
+export default function ModeToggle({ mode, onChange }: Props) {
   return (
-    <div className={`flex bg-elev rounded-full p-0.5 gap-0.5${className ? ` ${className}` : ''}`}>
-      <button
-        onClick={() => onChange('events')}
-        className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-          mode === 'events' ? 'bg-accent text-bg' : 'text-muted hover:text-text'
-        }`}
-      >
-        eventi
-      </button>
-      <button
-        onClick={() => onChange('venues')}
-        className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-          mode === 'venues' ? 'bg-accent text-bg' : 'text-muted hover:text-text'
-        }`}
-      >
-        locali
-      </button>
+    <div className="hidden md:flex items-center bg-elev rounded-full p-0.5 gap-0.5 shrink-0">
+      {(['events', 'venues'] as Mode[]).map((m) => (
+        <button
+          key={m}
+          onClick={() => onChange(m)}
+          className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+            mode === m
+              ? 'bg-accent text-inv'
+              : 'text-muted hover:text-text'
+          }`}
+        >
+          {m === 'events' ? 'eventi' : 'locali'}
+        </button>
+      ))}
     </div>
   )
 }

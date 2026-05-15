@@ -1,4 +1,5 @@
 import type { Event, EventCategory, EventQuery, EventSource } from '@/lib/types'
+import { haversineKm } from '@/lib/distance'
 
 // RA area IDs for Italian cities. Each entry pinned to canonical lat/lng so we
 // can do nearest-area fallback when the user's city isn't in the substring map.
@@ -23,15 +24,7 @@ const AREAS: RAArea[] = [
 // showed users in remote provinces seeing distant-city events.
 const NEAREST_AREA_CAP_KM = 80
 
-function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const R = 6371
-  const dLat = (b.lat - a.lat) * Math.PI / 180
-  const dLng = (b.lng - a.lng) * Math.PI / 180
-  const lat1 = a.lat * Math.PI / 180
-  const lat2 = b.lat * Math.PI / 180
-  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2)
-  return 2 * R * Math.asin(Math.sqrt(h))
-}
+
 
 function resolveAreaId(city: string, lat?: number, lng?: number): number | null {
   const lower = city.toLowerCase()

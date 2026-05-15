@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { Event, EventType, Location, Setting, TimeOfDay } from '@/lib/types'
+import type { Event, EventCategory, EventType, Location, Setting, TimeOfDay } from '@/lib/types'
 
 export type Filters = {
   mode: 'events' | 'venues'
@@ -13,6 +13,7 @@ export type Filters = {
   timeOfDay?: TimeOfDay[]
   eventType?: EventType[]
   setting?: Setting
+  category?: EventCategory | EventCategory[]
 }
 
 export type GeoStatus = 'pending' | 'granted' | 'denied'
@@ -54,6 +55,13 @@ function parseFilters(params: URLSearchParams): Filters {
       ? (typeVal.split(',').filter(v => validType.includes(v as EventType)) as EventType[])
       : undefined,
     setting: settingVal === 'indoor' || settingVal === 'outdoor' ? settingVal : undefined,
+    category: (() => {
+      const catVal = params.get('cat')
+      const validCats: EventCategory[] = ['club', 'concert', 'aperitivo', 'theatre', 'other']
+      return catVal
+        ? (catVal.split(',').filter(v => validCats.includes(v as EventCategory)) as EventCategory[])
+        : undefined
+    })(),
   }
 }
 
@@ -116,6 +124,10 @@ export function useAppState(): AppState {
       if (newFilters.timeOfDay?.length) params.set('tod', newFilters.timeOfDay.join(','))
       if (newFilters.eventType?.length) params.set('etype', newFilters.eventType.join(','))
       if (newFilters.setting) params.set('setting', newFilters.setting)
+      if (newFilters.category) {
+        const cats = Array.isArray(newFilters.category) ? newFilters.category : [newFilters.category]
+        if (cats.length) params.set('cat', cats.join(','))
+      }
       const qs = params.toString()
       router.replace(qs ? `/?${qs}` : '/', { scroll: false })
     },

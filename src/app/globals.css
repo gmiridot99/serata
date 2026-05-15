@@ -5,23 +5,26 @@
   --card:      #111110;
   --elev:      #1a1917;
   --elev2:     #222018;
+
   --text:      #f0e8d5;
   --muted:     #5c564e;
   --bright:    #9a8e80;
+
+  --border:    rgba(240, 232, 213, 0.07);
+  --border-md: rgba(240, 232, 213, 0.13);
+
   --accent:    #f0a020;
-  --accent-lo: rgba(240,160,32,0.10);
-  --border:    rgba(240,232,213,0.07);
-  --border-md: rgba(240,232,213,0.13);
-}
+  --accent-lo: rgba(240, 160, 32, 0.10);
 
-body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font-dm-sans), sans-serif;
-}
+  --inv:       #080807;
+  --green:     #7ec27a;
 
-.font-display {
-  font-family: var(--font-syne), sans-serif;
+  /* category colors */
+  --cat-club:      #8b5cf6;
+  --cat-concert:   #3b82f6;
+  --cat-aperitivo: #f97316;
+  --cat-theatre:   #10b981;
+  --cat-other:     #6b7280;
 }
 
 @theme inline {
@@ -32,12 +35,54 @@ body {
   --color-text:      var(--text);
   --color-muted:     var(--muted);
   --color-bright:    var(--bright);
-  --color-accent:    var(--accent);
-  --color-accent-lo: var(--accent-lo);
   --color-border:    var(--border);
   --color-border-md: var(--border-md);
-  --font-sans: var(--font-dm-sans), sans-serif;
+  --color-accent:    var(--accent);
+  --color-accent-lo: var(--accent-lo);
+  --color-inv:       var(--inv);
+  --color-green:     var(--green);
+
+  --font-sans:    var(--font-dm-sans), sans-serif;
   --font-display: var(--font-syne), sans-serif;
+
+  --animate-slide-up:       slideUp 0.3s ease-out;
+  --animate-slide-right:    slideRight 0.3s ease-out;
+  --animate-slide-up-fast:  slideUp 0.2s ease-out;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01";
+}
+
+.tabular-nums { font-feature-settings: "tnum"; }
+
+/* hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* safe-area for mobile bottom nav */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+/* shadows */
+.shadow-fab {
+  box-shadow:
+    0 12px 32px -10px rgba(240, 160, 32, 0.5),
+    0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.shadow-panel {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes slideUp {
@@ -48,17 +93,6 @@ body {
 @keyframes slideRight {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
-}
-
-@theme inline {
-  --animate-slide-up:    slideUp 0.3s ease-out;
-  --animate-slide-right: slideRight 0.3s ease-out;
-  --animate-slide-up-fast: slideUp 0.2s ease-out;
-}
-
-/* safe-area padding for bottom nav */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Radius slider — custom range input */

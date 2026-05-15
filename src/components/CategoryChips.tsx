@@ -1,13 +1,13 @@
 'use client'
 
-type EventCategory = 'club' | 'concert' | 'aperitivo' | 'theatre' | 'other'
+import type { EventCategory } from '@/lib/types'
+import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/categories'
 
-const CATS: { key: EventCategory; label: string; color: string }[] = [
-  { key: 'club',      label: 'Club',      color: '#8b5cf6' },
-  { key: 'concert',   label: 'Concerto',  color: '#3b82f6' },
-  { key: 'aperitivo', label: 'Aperitivo', color: '#f97316' },
-  { key: 'theatre',   label: 'Teatro',    color: '#10b981' },
-]
+const CATS = (Object.keys(CATEGORY_COLORS) as EventCategory[]).map((key) => ({
+  key,
+  label: CATEGORY_LABELS[key],
+  color: CATEGORY_COLORS[key],
+}))
 
 type Props = {
   value?: EventCategory | EventCategory[]
@@ -26,7 +26,7 @@ export default function CategoryChips({ value, onChange, className }: Props) {
   }
 
   return (
-    <div className={`flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden${className ? ` ${className}` : ''}`}>
+    <div className={`flex gap-1.5 overflow-x-auto no-scrollbar${className ? ` ${className}` : ''}`}>
       {CATS.map((cat) => {
         const active = selected.includes(cat.key)
         return (
@@ -40,7 +40,7 @@ export default function CategoryChips({ value, onChange, className }: Props) {
               color:       active ? cat.color : 'var(--bright)',
             }}
           >
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cat.color }} />
+            <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: cat.color }} />
             {cat.label}
           </button>
         )

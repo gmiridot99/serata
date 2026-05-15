@@ -4,30 +4,20 @@
 import { Suspense, useState, useEffect } from 'react'
 import { APIProvider } from '@vis.gl/react-google-maps'
 import { useAppState } from '@/hooks/useAppState'
-import ModeToggle from './ModeToggle'
+import type { EventCategory } from '@/lib/types'
 import DateTabs from './DateTabs'
+import CategoryChips from './CategoryChips'
 import LocationChip from './LocationChip'
 import LocationOverlay from './LocationOverlay'
-import SplitView from './SplitView'
 import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
-import VenueSearch from './VenueSearch'
-import EventSearch from './EventSearch'
-import RecommendationsPanel from './RecommendationsPanel'
-import RatingChips from './RatingChips'
-import FilterDrawer from './FilterDrawer'
-import { useFilteredEvents } from '@/hooks/useFilteredEvents'
-import { serializeEventsForLLM } from '@/lib/serializeEvents'
-import { filterEvents } from '@/lib/filterEvents'
-import { tagCache } from '@/lib/tagCache'
-import type { TimeOfDay, EventType, Setting } from '@/lib/types'
-
-type SearchResult = {
-  rankedIds: string[]
-  reasons: Record<string, string>
-}
-
-type MobileTab = 'events' | 'map' | 'venues'
+import EventDetailPanel from './EventDetailPanel'
+import Sidebar from './Sidebar'
+import FilterSheet from './FilterSheet'
+import ModeToggle from './ModeToggle'
+import MapFAB from './MapFAB'
+import MapSheet from './MapSheet'
+import EventList from './EventList'
 
 function AppInner() {
   const {
@@ -45,100 +35,34 @@ function AppInner() {
   } = useAppState()
 
   const [locationOpen, setLocationOpen] = useState(false)
-  const [mobileTab, setMobileTab] = useState<MobileTab>('events')
-  const [minRating, setMinRating] = useState(0)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [searching, setSearching] = useState(false)
-  const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
-
-  const { events: filteredEvents, enriching } = useFilteredEvents(events, {
-    timeOfDay: filters.timeOfDay,
-    eventType: filters.eventType,
-    setting: filters.setting,
-  })
-
-  const isVenueMode = filters.mode === 'venues'
-
-  const visibleEvents = isVenueMode && minRating > 0
-    ? events.filter((e) => (e.rating ?? 0) >= minRating)
-    : isVenueMode
-      ? events
-      : filteredEvents
-
-  const eventDates = new Set(events.map((e) => e.date.slice(0, 10)))
+  const [mapOpen, setMapOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [freeOnly, setFreeOnly] = useState(false)
 
   useEffect(() => {
     if (geoStatus === 'denied' && !location) setLocationOpen(true)
   }, [geoStatus, location])
 
-  function handleMobileTabChange(tab: MobileTab) {
-    setMobileTab(tab)
-    if (tab === 'venues') {
-      setFilters({ ...filters, mode: 'venues', date: undefined })
-    } else if (tab === 'events') {
-      setFilters({ ...filters, mode: 'events' })
-    }
-  }
+  const isVenueMode = filters.mode === 'venues'
+  const userLocation = location ? { lat: location.lat, lng: location.lng } : undefined
+  const eventDates = new Set(events.map((e) => e.date.slice(0, 10)))
 
-  function handleModeToggle(mode: 'events' | 'venues') {
+  const activeCategories: EventCategory[] = Array.isArray(filters.category)
+    ? filters.category
+    : filters.category ? [filters.category] : []
+
+  const visibleEvents = freeOnly
+    ? events.filter((e) => e.price === 'free')
+    : events
+
+  function handleModeChange(mode: 'events' | 'venues') {
     setFilters({
       ...filters,
       mode,
       q: mode === 'events' ? undefined : filters.q,
       date: mode === 'venues' ? undefined : filters.date,
     })
-    if (mode === 'venues') setMobileTab('venues')
-    else setMobileTab('events')
   }
-
-  async function handleSearchSubmit(query: string) {
-    if (searching) return
-    setSearching(true)
-    try {
-      const payload = serializeEventsForLLM(visibleEvents)
-      const res = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, events: payload }),
-      })
-      if (!res.ok) {
-        setSearchResult({ rankedIds: [], reasons: {} })
-        return
-      }
-      const data = (await res.json()) as {
-        filters?: {
-          timeOfDay?: TimeOfDay[]
-          eventType?: EventType[]
-          setting?: Setting
-        }
-        rankedIds?: string[]
-        reasons?: Record<string, string>
-      }
-      const f = data.filters ?? {}
-      setFilters({
-        ...filters,
-        timeOfDay: f.timeOfDay && f.timeOfDay.length ? f.timeOfDay : undefined,
-        eventType: f.eventType && f.eventType.length ? f.eventType : undefined,
-        setting: f.setting,
-      })
-      setSearchResult({
-        rankedIds: data.rankedIds ?? [],
-        reasons: data.reasons ?? {},
-      })
-    } catch (err) {
-      console.error('[search] failed:', err)
-      setSearchResult({ rankedIds: [], reasons: {} })
-    } finally {
-      setSearching(false)
-    }
-  }
-
-  const recommendedEvents = searchResult
-    ? searchResult.rankedIds
-        .slice(0, 5)
-        .map((id) => events.find((e) => e.id === id))
-        .filter((e): e is NonNullable<typeof e> => Boolean(e))
-    : []
 
   function handleUseMyLocation() {
     if (!navigator.geolocation) {
@@ -148,11 +72,9 @@ function AppInner() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords
-        console.log('[geo] raw coords:', lat, lng)
         try {
           const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`)
           const data = await res.json()
-          console.log('[geo] geocode response:', data)
           setLocation({
             name: data.city ?? 'La mia posizione',
             lat: data.lat ?? lat,
@@ -175,126 +97,135 @@ function AppInner() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-bg overflow-hidden">
-      {/* Desktop header */}
-      <header className="hidden md:flex h-14 items-center gap-0 px-7 border-b border-border shrink-0 bg-bg">
-        <span className="font-display font-black text-xl text-accent tracking-tight mr-6 shrink-0">
-          serata
-        </span>
+    <div className="h-screen overflow-hidden bg-bg">
 
-        <LocationChip location={location} onClick={() => setLocationOpen(true)} />
-
-        <ModeToggle mode={filters.mode} onChange={handleModeToggle} className="mx-4 shrink-0" />
-
-        <div className="w-px h-5 bg-border mx-3 shrink-0" />
-
-        {isVenueMode ? (
-          <>
-            <VenueSearch
-              value={filters.q ?? ''}
-              onChange={(q) => setFilters({ ...filters, q: q || undefined })}
-            />
-            <div className="w-px h-5 bg-border mx-3 shrink-0" />
-            <RatingChips value={minRating} onChange={setMinRating} />
-          </>
-        ) : (
-          <>
-            <EventSearch onSubmit={handleSearchSubmit} loading={searching} />
-            <div className="w-px h-5 bg-border mx-3 shrink-0" />
-            <DateTabs
-              value={filters.date}
-              onChange={(date) => setFilters({ ...filters, date })}
-              eventDates={eventDates}
-              location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
-            />
-
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="ml-3 shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-[11px] font-medium"
-            >
-              ⚙ Filtri
-              {((filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
-                <span className="ml-1 text-accent">
-                  ({(filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)})
-                </span>
-              )}
-              {enriching && <span className="ml-1 animate-pulse">…</span>}
-            </button>
-          </>
-        )}
-
-        <div className="flex-1" />
-
-        <span className="text-xs text-muted shrink-0 tabular-nums">
-          {visibleEvents.length} {isVenueMode ? 'locali' : 'eventi'}
-        </span>
-      </header>
-
-      {/* Mobile header */}
-      <header className="flex md:hidden flex-col shrink-0 bg-bg border-b border-border z-30">
-        <div className="flex items-center justify-between px-4 py-3">
-          <span className="font-display font-black text-xl text-accent tracking-tight">serata</span>
-          <LocationChip location={location} onClick={() => setLocationOpen(true)} />
-        </div>
-        {isVenueMode ? (
-          <div className="px-4 pb-3 pt-1 flex flex-col gap-2">
-            <VenueSearch
-              value={filters.q ?? ''}
-              onChange={(q) => setFilters({ ...filters, q: q || undefined })}
-            />
-            <RatingChips value={minRating} onChange={setMinRating} />
+      {/* ─── MOBILE ─── */}
+      <div className="flex flex-col h-full md:hidden">
+        <header className="shrink-0 bg-bg border-b border-border z-30">
+          {/* Row 1: wordmark + location */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="font-display font-black text-xl text-accent tracking-tight">serata</span>
+            <LocationChip location={location} onClick={() => setLocationOpen(true)} />
           </div>
-        ) : (
-          <>
-            <div className="px-4 pt-1">
-              <EventSearch onSubmit={handleSearchSubmit} loading={searching} />
-            </div>
-            <div className="flex items-center gap-2 px-4 pb-3 pt-2">
-              <DateTabs
-                value={filters.date}
-                onChange={(date) => setFilters({ ...filters, date })}
-                eventDates={eventDates}
-                location={location ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm } : undefined}
+          {/* Row 2: date tabs */}
+          <DateTabs
+            value={filters.date}
+            onChange={(date) => setFilters({ ...filters, date })}
+            eventDates={eventDates}
+            location={location
+              ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm }
+              : undefined}
+          />
+          {/* Row 3: category chips + filter button */}
+          <div className="flex items-center gap-2 px-4 py-2">
+            <div className="flex-1 min-w-0">
+              <CategoryChips
+                value={activeCategories}
+                onChange={(cats) => setFilters({ ...filters, category: cats })}
               />
+            </div>
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="shrink-0 px-3 py-1.5 rounded-full border border-border text-[11px] font-medium text-bright hover:text-text transition-colors"
+            >
+              filtri
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto px-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <EventList
+              events={visibleEvents}
+              highlightedId={highlightedId}
+              onCardHover={setHighlightedId}
+              onSelect={setSelectedEvent}
+              userLocation={userLocation}
+            />
+          )}
+        </main>
+
+        <BottomNav activeMode={filters.mode} onChange={handleModeChange} />
+        <MapFAB onClick={() => setMapOpen((o) => !o)} isOpen={mapOpen} />
+      </div>
+
+      {/* ─── DESKTOP ─── */}
+      <div className="hidden md:flex h-full">
+        <Sidebar
+          cityName={location?.name}
+          radiusKm={filters.radiusKm}
+          activeDate={filters.date}
+          onDateChange={(date) => setFilters({ ...filters, date })}
+          activeCategories={activeCategories}
+          onCategoryChange={(cats) => setFilters({ ...filters, category: cats })}
+          onCityClick={() => setLocationOpen(true)}
+          free={freeOnly}
+          onFreeChange={setFreeOnly}
+        />
+
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {/* Desktop topbar */}
+          <div className="shrink-0 flex items-center justify-between px-6 h-14 border-b border-border bg-bg z-20">
+            <LocationChip location={location} onClick={() => setLocationOpen(true)} />
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted tabular-nums">
+                {visibleEvents.length} {isVenueMode ? 'locali' : 'eventi'}
+              </span>
+              <ModeToggle mode={filters.mode} onChange={handleModeChange} />
               <button
-                onClick={() => setDrawerOpen(true)}
-                className="shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-[11px] font-medium"
+                onClick={() => setFilterOpen((o) => !o)}
+                className="px-3 py-1.5 rounded-full border border-border text-[11px] font-medium text-bright hover:text-text transition-colors"
               >
-                ⚙
-                {((filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)) > 0 && (
-                  <span className="text-accent">
-                    {(filters.timeOfDay?.length ?? 0) + (filters.eventType?.length ?? 0) + (filters.setting ? 1 : 0)}
-                  </span>
-                )}
+                filtri
               </button>
             </div>
-          </>
+          </div>
+
+          <main className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="max-w-[720px] mx-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <EventList
+                  events={visibleEvents}
+                  highlightedId={highlightedId}
+                  onCardHover={setHighlightedId}
+                  onSelect={setSelectedEvent}
+                  userLocation={userLocation}
+                />
+              )}
+            </div>
+          </main>
+        </div>
+
+        <MapFAB onClick={() => setMapOpen((o) => !o)} isOpen={mapOpen} />
+
+        {selectedEvent && (
+          <EventDetailPanel
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+          />
         )}
-      </header>
+      </div>
 
-      {!isVenueMode && searchResult && (
-        <RecommendationsPanel
-          events={recommendedEvents}
-          reasons={searchResult.reasons}
-          onSelect={setSelectedEvent}
-          onDismiss={() => setSearchResult(null)}
-        />
-      )}
-
-      <SplitView
+      {/* ─── SHARED OVERLAYS ─── */}
+      <MapSheet
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
         events={visibleEvents}
-        loading={loading}
         city={location?.name}
         highlightedId={highlightedId}
-        onCardHover={setHighlightedId}
         onSelect={setSelectedEvent}
-        mobileTab={mobileTab}
         isVenueMode={isVenueMode}
         radiusKm={filters.radiusKm}
         onRadiusChange={(km) => setFilters({ ...filters, radiusKm: km })}
       />
-
-      <BottomNav activeTab={mobileTab} onChange={handleMobileTabChange} />
 
       <LocationOverlay
         open={locationOpen}
@@ -303,27 +234,22 @@ function AppInner() {
         onUseMyLocation={handleUseMyLocation}
       />
 
+      {/* Mobile-only detail modal */}
       <EventDetailModal
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
       />
 
-      <FilterDrawer
-        open={drawerOpen}
-        timeOfDay={filters.timeOfDay ?? []}
-        eventType={filters.eventType ?? []}
-        setting={filters.setting}
-        onApply={({ timeOfDay, eventType, setting }) => {
-          setFilters({
-            ...filters,
-            timeOfDay: timeOfDay.length ? timeOfDay : undefined,
-            eventType: eventType.length ? eventType : undefined,
-            setting,
-          })
-          setDrawerOpen(false)
+      <FilterSheet
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        radiusKm={filters.radiusKm}
+        category={activeCategories}
+        free={freeOnly}
+        onApply={({ radiusKm, category, free }) => {
+          setFilters({ ...filters, radiusKm, category })
+          setFreeOnly(free)
         }}
-        onClose={() => setDrawerOpen(false)}
-        previewCount={(pending) => filterEvents(events, pending, tagCache).length}
       />
     </div>
   )

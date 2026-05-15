@@ -1,8 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
-import { Event, EventCategory } from '@/lib/types'
+import { Map, AdvancedMarker } from '@vis.gl/react-google-maps'
+import { Event, EventCategory, EventPrice } from '@/lib/types'
+import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/categories'
+
+function priceText(price: EventPrice): string {
+  if (price === 'free') return 'gratis'
+  if (price.min === price.max) return `€${price.min}`
+  return `€${price.min}`
+}
 
 type Props = {
   events: Event[]
@@ -13,14 +20,6 @@ type Props = {
   isVenueMode?: boolean
   radiusKm?: number
   onRadiusChange?: (km: number) => void
-}
-
-const CATEGORY_COLORS: Record<EventCategory, string> = {
-  club: '#7c3aed',
-  concert: '#2563eb',
-  aperitivo: '#f97316',
-  theatre: '#16a34a',
-  other: '#6b7280',
 }
 
 export default function EventMap({
@@ -36,11 +35,9 @@ export default function EventMap({
 
   const defaultZoom = mappableEvents.length > 0 ? 12 : 6
 
-  // local state for smooth slider dragging — debounce the actual fetch
   const [localRadius, setLocalRadius] = useState(radiusKm)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // sync when prop changes externally (URL load, location change)
   useEffect(() => { setLocalRadius(radiusKm) }, [radiusKm])
 
   function handleSlider(v: number) {
@@ -56,17 +53,17 @@ export default function EventMap({
       className={`w-full h-full relative${className ? ` ${className}` : ''}`}
       style={{ height: '100%', minHeight: '400px' }}
     >
-      {/* count pill */}
+      {/* count pill — top center */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10
-        bg-bg/80 backdrop-blur-md border border-border rounded-full
+        bg-bg/85 backdrop-blur-md border border-border rounded-full
         px-3 py-1.5 text-xs font-semibold text-text pointer-events-none">
-        {mappableEvents.length} {isVenueMode ? 'locali' : 'eventi'}
+        {mappableEvents.length} {isVenueMode ? 'locali' : 'eventi'} in vista
       </div>
 
       {/* radius slider — top-right */}
       {onRadiusChange && (
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2
-          bg-bg/80 backdrop-blur-md border border-border rounded-full px-3 py-2">
+          bg-bg/85 backdrop-blur-md border border-border rounded-full px-3 py-2">
           <input
             type="range"
             min="1"
@@ -94,16 +91,48 @@ export default function EventMap({
         style={{ width: '100%', height: '100%' }}
       >
         {mappableEvents.map((event) => {
-          const isHighlighted = event.id === highlightedId
-          const bgColor = isHighlighted ? '#f0a020' : CATEGORY_COLORS[event.category]
+          const isSelected = event.id === highlightedId
+          const catColor = CATEGORY_COLORS[event.category] ?? CATEGORY_COLORS.other
+          const catLabel = CATEGORY_LABELS[event.category] ?? event.category
+
           return (
             <AdvancedMarker
               key={event.id}
               position={{ lat: event.venue.lat, lng: event.venue.lng }}
               onClick={() => onSelect?.(event)}
-              style={isHighlighted ? { transform: 'scale(1.3)', zIndex: 10 } : undefined}
             >
-              <Pin background={bgColor} borderColor={bgColor} glyphColor="#ffffff" />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: isSelected ? '6px 12px 6px 8px' : '5px 11px 5px 7px',
+                  borderRadius: '999px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  background: isSelected ? 'var(--text)' : 'rgba(8,8,7,0.92)',
+                  color: isSelected ? 'var(--bg)' : 'var(--text)',
+                  border: `1px solid ${isSelected ? catColor : 'rgba(240,232,213,0.13)'}`,
+                  boxShadow: isSelected
+                    ? `0 10px 26px ${catColor}55, 0 0 0 4px ${catColor}26`
+                    : '0 6px 16px rgba(0,0,0,0.55)',
+                  transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <span style={{
+                  width: isSelected ? '8px' : '7px',
+                  height: isSelected ? '8px' : '7px',
+                  borderRadius: '50%',
+                  background: catColor,
+                  flexShrink: 0,
+                  boxShadow: isSelected ? `0 0 0 2px var(--bg)` : 'none',
+                }} />
+                {catLabel}
+              </div>
             </AdvancedMarker>
           )
         })}

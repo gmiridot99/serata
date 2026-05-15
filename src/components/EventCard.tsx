@@ -2,22 +2,14 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { Event, EventCategory } from '@/lib/types'
+import { Event } from '@/lib/types'
 
-const CATEGORY_COLORS: Record<EventCategory, string> = {
+const CAT_COLORS: Record<string, string> = {
   club:      '#8b5cf6',
   concert:   '#3b82f6',
   aperitivo: '#f97316',
   theatre:   '#10b981',
   other:     '#6b7280',
-}
-
-const CATEGORY_LABELS: Record<EventCategory, string> = {
-  club:      'Club',
-  concert:   'Concerto',
-  aperitivo: 'Aperitivo',
-  theatre:   'Teatro',
-  other:     'Altro',
 }
 
 function formatPrice(price: Event['price']): { text: string; free: boolean } {
@@ -28,128 +20,79 @@ function formatPrice(price: Event['price']): { text: string; free: boolean } {
 
 type Props = {
   event: Event
-  variant?: 'featured' | 'row'
+  distanceKm?: number
   highlighted?: boolean
   onHover?: () => void
   onHoverEnd?: () => void
   onClick?: () => void
 }
 
-export default function EventCard({ event, variant = 'row', highlighted, onHover, onHoverEnd, onClick }: Props) {
+export default function EventCard({ event, distanceKm, highlighted, onHover, onHoverEnd, onClick }: Props) {
   const { text: priceDisplay, free: isFree } = formatPrice(event.price)
-  const catColor = CATEGORY_COLORS[event.category]
   const [imgFailed, setImgFailed] = useState(false)
   const showImage = !!event.imageUrl && !imgFailed
+  const catColor = CAT_COLORS[event.category] ?? CAT_COLORS.other
+  const isVenue = event.source === 'places'
 
-  if (variant === 'featured') {
-    return (
-      <div
-        className={`rounded-2xl overflow-hidden relative h-44 cursor-pointer group${
-          highlighted ? ' ring-2 ring-accent' : ''
-        }`}
-        onMouseEnter={onHover}
-        onMouseLeave={onHoverEnd}
-        onClick={onClick}
-      >
-        {showImage ? (
-          <Image
-            src={event.imageUrl!}
-            alt={event.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 420px"
-            className="object-cover"
-            unoptimized={false}
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-card to-bg" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="flex items-end justify-between mb-1">
-            {event.source === 'places' && event.rating ? (
-              <div className="flex flex-col leading-none">
-                <span className="font-display font-black text-3xl text-text tracking-tighter leading-none">
-                  ⭐ {event.rating}
-                </span>
-                {event.reviewCount && (
-                  <span className="text-xs text-bright mt-0.5">{event.reviewCount} recensioni</span>
-                )}
-              </div>
-            ) : (
-              <span className="font-display font-black text-3xl text-text tracking-tighter leading-none">
-                {event.startTime}
-              </span>
-            )}
-            <span className={`text-sm font-bold ${isFree ? 'text-green-400' : 'text-accent'}`}>
-              {priceDisplay}
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-text mb-1 truncate">{event.title}</p>
-          <div className="flex items-center gap-1.5 text-[11px] text-bright">
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: catColor }} />
-            {event.venue.name} · {CATEGORY_LABELS[event.category]}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const distLabel = distanceKm != null
+    ? distanceKm < 1
+      ? `${Math.round(distanceKm * 1000)}m`
+      : `${distanceKm.toFixed(1)}km`
+    : null
 
   return (
     <div
-      className={`flex gap-3 items-center py-3 border-b border-border cursor-pointer
-        last:border-0 hover:bg-elev/50 -mx-1 px-1 rounded-lg transition-colors${
-          highlighted ? ' ring-1 ring-accent/40' : ''
-        }`}
+      className={`flex gap-3 items-center py-3 border-b border-border cursor-pointer hover:bg-elev/50 transition-colors rounded-xl px-2 -mx-2${highlighted ? ' ring-2 ring-accent' : ''}`}
       onMouseEnter={onHover}
       onMouseLeave={onHoverEnd}
       onClick={onClick}
     >
-      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative">
+      {/* Thumb */}
+      <div className="w-[84px] h-[84px] rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-elev2 to-bg">
         {showImage ? (
           <Image
             src={event.imageUrl!}
             alt={event.title}
-            fill
-            sizes="48px"
-            className="object-cover"
+            width={84}
+            height={84}
+            className="w-full h-full object-cover"
             onError={() => setImgFailed(true)}
           />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-card to-bg" />
-        )}
+        ) : null}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 mb-0.5">
-          {event.source === 'places' && event.rating ? (
-            <>
-              <span className="font-display font-bold text-lg text-text tracking-tight leading-none">
-                ⭐ {event.rating}
-              </span>
-              {event.reviewCount && (
-                <span className="text-[10px] text-muted">· {event.reviewCount}</span>
-              )}
-            </>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+        {/* Row 1: time + price */}
+        <div className="flex items-baseline justify-between gap-2">
+          {isVenue ? (
+            <span className="font-display font-bold text-[18px] text-text truncate">{event.venue.name}</span>
           ) : (
-            <>
-              <span className="font-display font-bold text-lg text-text tracking-tight leading-none">
-                {event.startTime}
-              </span>
-              {event.endTime && (
-                <span className="text-[10px] text-muted">→ {event.endTime}</span>
-              )}
-            </>
+            <span className="font-display font-bold text-[18px] text-text">
+              {event.startTime}
+              {event.endTime && <span className="text-muted font-normal text-[14px]"> → {event.endTime}</span>}
+            </span>
+          )}
+          {!isVenue && (
+            <span className={`text-[13px] font-semibold shrink-0 ${isFree ? 'text-green' : 'text-accent'}`}>
+              {priceDisplay}
+            </span>
+          )}
+          {isVenue && event.rating && (
+            <span className="text-[13px] font-semibold text-accent shrink-0">★ {event.rating}</span>
           )}
         </div>
-        <p className="text-[13px] font-medium text-text truncate mb-0.5">{event.title}</p>
+
+        {/* Row 2: title */}
+        <p className="text-[13px] font-medium text-text truncate">{event.title}</p>
+
+        {/* Row 3: category dot + venue + km */}
         <div className="flex items-center gap-1.5 text-[11px] text-bright">
-          <span className="w-1 h-1 rounded-full shrink-0" style={{ background: catColor }} />
-          {event.venue.name}
+          <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: catColor }} />
+          <span className="truncate">{event.venue.name}</span>
+          {distLabel && <span className="shrink-0">· {distLabel}</span>}
         </div>
       </div>
-      <span className={`text-xs font-bold shrink-0 ${isFree ? 'text-green-400' : 'text-accent'}`}>
-        {priceDisplay}
-      </span>
     </div>
   )
 }

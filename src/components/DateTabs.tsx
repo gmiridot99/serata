@@ -174,9 +174,11 @@ type Props = {
   className?: string
   eventDates?: Set<string>
   location?: LocationInfo
+  /** 'underline' = mobile tabs with border-b-2; 'pill' = desktop compact rect */
+  variant?: 'underline' | 'pill'
 }
 
-export default function DateTabs({ value, onChange, className, eventDates, location }: Props) {
+export default function DateTabs({ value, onChange, className, eventDates, location, variant = 'underline' }: Props) {
   const pills = buildPills()
   const [showCalendar, setShowCalendar] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -204,24 +206,28 @@ export default function DateTabs({ value, onChange, className, eventDates, locat
     return date.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
   }
 
+  const isPill = variant === 'pill'
+
   return (
     <div
       ref={wrapperRef}
       className={`relative flex items-stretch${className ? ` ${className}` : ''}`}
     >
       {/* scrollable pills */}
-      <div className="flex-1 min-w-0 flex overflow-x-auto border-b border-border [&::-webkit-scrollbar]:hidden">
+      <div className={`flex-1 min-w-0 flex overflow-x-auto no-scrollbar gap-0.5
+        ${!isPill ? 'border-b border-border' : ''}`}>
         {pills.map((pill) => {
           const active = value === pill.value
           return (
             <button
               key={pill.value}
               onClick={() => onChange(active ? undefined : pill.value)}
-              className={`shrink-0 flex flex-col items-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
-                text-xs font-medium transition-colors
-                ${active
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-muted hover:text-bright'
+              className={`shrink-0 flex flex-col items-center transition-colors
+                ${isPill
+                  ? `px-3 py-1.5 rounded-lg text-[12px] font-semibold
+                     ${active ? 'bg-accent-lo text-accent' : 'text-bright hover:text-text'}`
+                  : `px-3.5 py-2 pb-2.5 border-b-2 -mb-px text-xs font-medium
+                     ${active ? 'border-accent text-accent' : 'border-transparent text-bright hover:text-text'}`
                 }`}
             >
               <span className="font-semibold lowercase">{pill.label}</span>
@@ -233,8 +239,11 @@ export default function DateTabs({ value, onChange, className, eventDates, locat
         {isCustomDate && (
           <button
             onClick={() => onChange(undefined)}
-            className="shrink-0 flex flex-col items-center px-3.5 py-2 pb-2.5 border-b-2 -mb-px
-              border-accent text-accent text-xs font-medium"
+            className={`shrink-0 flex flex-col items-center text-xs font-medium
+              ${isPill
+                ? 'px-3 py-1.5 rounded-lg bg-accent-lo text-accent text-[12px] font-semibold'
+                : 'px-3.5 py-2 pb-2.5 border-b-2 -mb-px border-accent text-accent'
+              }`}
           >
             <span className="font-semibold">{formatCustomPill(value!)}</span>
             <span className="opacity-60 text-[10px]">×</span>
@@ -243,7 +252,7 @@ export default function DateTabs({ value, onChange, className, eventDates, locat
       </div>
 
       {/* calendar button — always visible, pinned right */}
-      <div className="shrink-0 border-b border-border flex items-center relative">
+      <div className={`shrink-0 flex items-center relative ${!isPill ? 'border-b border-border' : ''}`}>
         <button
           aria-label="calendario"
           onClick={() => setShowCalendar((s) => !s)}

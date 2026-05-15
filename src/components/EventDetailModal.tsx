@@ -132,14 +132,13 @@ export default function EventDetailModal({ event, onClose }: Props) {
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 z-40 md:bg-transparent md:pointer-events-none"
+        className="md:hidden fixed inset-0 bg-black/50 z-50"
         onClick={onClose}
       />
       <div
         className={[
-          'fixed z-50 bg-bg overflow-y-auto',
+          'md:hidden fixed z-50 bg-bg overflow-y-auto',
           'bottom-0 left-0 right-0 max-h-[90vh] rounded-t-2xl animate-slide-up',
-          'md:bottom-auto md:top-0 md:left-auto md:right-0 md:w-[420px] md:h-screen md:rounded-none md:animate-slide-right',
         ].join(' ')}
       >
         <button
@@ -147,7 +146,11 @@ export default function EventDetailModal({ event, onClose }: Props) {
           aria-label="Chiudi"
           className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-card flex items-center justify-center text-muted hover:text-text transition-colors"
         >
-          ✕
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
 
         {/* Hero */}
@@ -175,7 +178,7 @@ export default function EventDetailModal({ event, onClose }: Props) {
 
           {/* Category badge */}
           <span
-            className="absolute bottom-4 left-4 text-white text-xs font-semibold px-2 py-0.5 rounded-full"
+            className="absolute bottom-4 left-4 text-inv text-xs font-semibold px-2 py-0.5 rounded-full"
             style={{ background: catColor }}
           >
             {catLabel}
@@ -223,7 +226,7 @@ export default function EventDetailModal({ event, onClose }: Props) {
           </div>
 
           {event.description && (
-            <p className="text-muted text-sm leading-relaxed">{event.description}</p>
+            <p className="text-bright text-sm leading-relaxed">{event.description}</p>
           )}
 
           {isPlace && enrichStatus === 'loading' && (
@@ -268,14 +271,16 @@ export default function EventDetailModal({ event, onClose }: Props) {
 
           {hasCoords && <EventMiniMap venue={event.venue} />}
 
-          <a
-            href={event.ticketUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-accent text-bg text-center py-3 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
-          >
-            {isPlace ? 'Apri in Google Maps →' : 'Compra biglietti →'}
-          </a>
+          <div className="sticky bottom-0 bg-bg pt-3 pb-safe">
+            <a
+              href={event.ticketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full bg-accent text-inv text-center py-3 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
+            >
+              {isPlace ? 'Apri in Google Maps →' : 'Compra biglietti →'}
+            </a>
+          </div>
         </div>
       </div>
     </>

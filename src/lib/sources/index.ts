@@ -5,7 +5,6 @@ import { PlacesSource } from './places'
 import { ResidentAdvisorSource } from './residentadvisor'
 import { DiceSource } from './dice'
 import { EventbriteSource } from './eventbrite'
-import { InstagramSource } from './instagram'
 import { expandVenueQuery } from '@/lib/venueExpand'
 import { deduplicateEvents } from '@/lib/dedup'
 
@@ -15,8 +14,6 @@ const eventSources: EventSource[] = [
   new ResidentAdvisorSource(),
   new DiceSource(),
   new EventbriteSource(),
-  // Gated behind INSTAGRAM_ENABLED env var — see InstagramSource.fetch
-  new InstagramSource(process.env.GOOGLE_PLACES_API_KEY ?? ''),
 ]
 
 const placesSource = new PlacesSource(process.env.GOOGLE_PLACES_API_KEY ?? '')
