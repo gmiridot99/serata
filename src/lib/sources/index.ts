@@ -7,6 +7,7 @@ import { DiceSource } from './dice'
 import { EventbriteSource } from './eventbrite'
 import { expandVenueQuery } from '@/lib/venueExpand'
 import { deduplicateEvents } from '@/lib/dedup'
+import { haversineKm } from '@/lib/distance'
 
 // Bandsintown: v4 location search requires registered API key — disabled
 const eventSources: EventSource[] = [
@@ -29,10 +30,22 @@ export async function fetchEvents(query: EventQuery): Promise<Event[]> {
       console.error(`[sources] source[${i}] failed:`, r.reason)
     }
   })
-  const events = results
+  const raw = results
     .filter((r): r is PromiseFulfilledResult<Event[]> => r.status === 'fulfilled')
     .flatMap((r) => r.value)
-  return deduplicateEvents(events)
+  const deduped = deduplicateEvents(raw)
+
+  // Post-filter: remove events with valid coords that are beyond 1.5× the search radius.
+  // Events with lat=0,lng=0 (unknown coords) are kept as-is.
+  if (query.lat !== undefined && query.lng !== undefined) {
+    const cap = (query.radiusKm ?? 10) * 1.5
+    const origin = { lat: query.lat, lng: query.lng }
+    return deduped.filter((e) => {
+      if (e.venue.lat === 0 && e.venue.lng === 0) return true
+      return haversineKm(origin, { lat: e.venue.lat, lng: e.venue.lng }) <= cap
+    })
+  }
+  return deduped
 }
 
 export const fetchEventById = cache(async (id: string): Promise<Event | null> => {

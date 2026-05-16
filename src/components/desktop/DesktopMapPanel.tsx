@@ -8,6 +8,8 @@ const EventMap = dynamic(() => import('../EventMap'), { ssr: false })
 type Props = {
   events: Event[]
   city?: string | null
+  centerLat?: number
+  centerLng?: number
   highlightedId: string | null
   onSelect: (event: Event) => void
   isVenueMode?: boolean
@@ -37,7 +39,7 @@ function ChevLeftIcon() {
 }
 
 export default function DesktopMapPanel({
-  events, city, highlightedId, onSelect, isVenueMode, fullscreen, onToggleFullscreen,
+  events, city, centerLat, centerLng, highlightedId, onSelect, isVenueMode, fullscreen, onToggleFullscreen,
 }: Props) {
   return (
     <div className="flex-1 p-[14px] bg-bg min-w-0">
@@ -45,6 +47,8 @@ export default function DesktopMapPanel({
         <EventMap
           events={events}
           city={city}
+          centerLat={centerLat}
+          centerLng={centerLng}
           highlightedId={highlightedId}
           onSelect={onSelect}
           isVenueMode={isVenueMode}

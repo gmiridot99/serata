@@ -10,6 +10,8 @@ type Props = {
   onClose: () => void
   events: Event[]
   city?: string | null
+  centerLat?: number
+  centerLng?: number
   highlightedId: string | null
   onSelect: (event: Event) => void
   isVenueMode?: boolean
@@ -32,6 +34,8 @@ export default function MapSheet({
   onClose,
   events,
   city,
+  centerLat,
+  centerLng,
   highlightedId,
   onSelect,
   isVenueMode,
@@ -69,6 +73,8 @@ export default function MapSheet({
           <EventMap
             events={events}
             city={city}
+            centerLat={centerLat}
+            centerLng={centerLng}
             highlightedId={highlightedId}
             onSelect={onSelect}
             isVenueMode={isVenueMode}

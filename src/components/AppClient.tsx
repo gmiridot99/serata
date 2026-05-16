@@ -17,6 +17,8 @@ import MapFAB from './MapFAB'
 import MapSheet from './MapSheet'
 import EventList from './EventList'
 import { haversineKm } from '@/lib/distance'
+import { filterEvents } from '@/lib/filterEvents'
+import { tagCache } from '@/lib/tagCache'
 import DesktopListPanel from './desktop/DesktopListPanel'
 import DesktopDetailPanel from './desktop/DesktopDetailPanel'
 import DesktopMapPanel from './desktop/DesktopMapPanel'
@@ -54,9 +56,12 @@ function AppInner() {
     ? filters.category
     : filters.category ? [filters.category] : []
 
-  const visibleEvents = freeOnly
-    ? events.filter((e) => e.price === 'free')
-    : events
+  const baseEvents = freeOnly ? events.filter((e) => e.price === 'free') : events
+  const visibleEvents = filterEvents(baseEvents, {
+    timeOfDay: filters.timeOfDay,
+  }, tagCache).filter((e) =>
+    activeCategories.length === 0 || activeCategories.includes(e.category)
+  )
 
   function handleModeChange(mode: 'events' | 'venues') {
     setFilters({
@@ -221,6 +226,8 @@ function AppInner() {
           <DesktopMapPanel
             events={visibleEvents}
             city={location?.name}
+            centerLat={location?.lat}
+            centerLng={location?.lng}
             highlightedId={selectedEvent?.id ?? highlightedId}
             onSelect={(ev) => { setSelectedEvent(ev); setMapFullscreen(false) }}
             isVenueMode={isVenueMode}
@@ -236,6 +243,8 @@ function AppInner() {
         onClose={() => setMapOpen(false)}
         events={visibleEvents}
         city={location?.name}
+        centerLat={location?.lat}
+        centerLng={location?.lng}
         highlightedId={highlightedId}
         onSelect={setSelectedEvent}
         isVenueMode={isVenueMode}
@@ -261,9 +270,10 @@ function AppInner() {
         onClose={() => setFilterOpen(false)}
         radiusKm={filters.radiusKm}
         category={activeCategories}
+        timeOfDay={filters.timeOfDay ?? []}
         free={freeOnly}
-        onApply={({ radiusKm, category, free }) => {
-          setFilters({ ...filters, radiusKm, category })
+        onApply={({ radiusKm, category, timeOfDay, free }) => {
+          setFilters({ ...filters, radiusKm, category, timeOfDay: timeOfDay.length ? timeOfDay : undefined })
           setFreeOnly(free)
         }}
       />

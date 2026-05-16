@@ -14,6 +14,8 @@ function priceText(price: EventPrice): string {
 type Props = {
   events: Event[]
   city?: string | null
+  centerLat?: number
+  centerLng?: number
   highlightedId?: string | null
   onSelect?: (event: Event) => void
   className?: string
@@ -23,17 +25,19 @@ type Props = {
 }
 
 export default function EventMap({
-  events, city, highlightedId, onSelect, className,
+  events, city, centerLat, centerLng, highlightedId, onSelect, className,
   isVenueMode, radiusKm = 10, onRadiusChange,
 }: Props) {
   const mappableEvents = events.filter((e) => e.venue.lat !== 0 || e.venue.lng !== 0)
 
   const defaultCenter =
-    mappableEvents.length > 0
-      ? { lat: mappableEvents[0].venue.lat, lng: mappableEvents[0].venue.lng }
-      : { lat: 42, lng: 12.5 }
+    (centerLat !== undefined && centerLng !== undefined)
+      ? { lat: centerLat, lng: centerLng }
+      : mappableEvents.length > 0
+        ? { lat: mappableEvents[0].venue.lat, lng: mappableEvents[0].venue.lng }
+        : { lat: 42, lng: 12.5 }
 
-  const defaultZoom = mappableEvents.length > 0 ? 12 : 6
+  const defaultZoom = (centerLat !== undefined || mappableEvents.length > 0) ? 12 : 6
 
   const [localRadius, setLocalRadius] = useState(radiusKm)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -83,7 +87,7 @@ export default function EventMap({
       )}
 
       <Map
-        key={city ?? 'default'}
+        key={centerLat !== undefined && centerLng !== undefined ? `${centerLat.toFixed(4)},${centerLng.toFixed(4)}` : (city ?? 'default')}
         mapId="DEMO_MAP_ID"
         defaultCenter={defaultCenter}
         defaultZoom={defaultZoom}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { EventCategory } from '@/lib/types'
+import type { EventCategory, TimeOfDay } from '@/lib/types'
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/categories'
 
 const RADIUS_OPTIONS = [5, 10, 25, 50]
@@ -12,13 +12,21 @@ const CATS = (Object.keys(CATEGORY_COLORS) as EventCategory[]).map((key) => ({
   color: CATEGORY_COLORS[key],
 }))
 
+const TIME_OPTIONS: { key: TimeOfDay; label: string }[] = [
+  { key: 'afternoon', label: 'pomeriggio' },
+  { key: 'aperitivo', label: 'aperitivo' },
+  { key: 'dinner', label: 'cena' },
+  { key: 'late', label: 'notte' },
+]
+
 type Props = {
   open: boolean
   onClose: () => void
   radiusKm: number
   category?: EventCategory[]
+  timeOfDay?: TimeOfDay[]
   free?: boolean
-  onApply: (filters: { radiusKm: number; category: EventCategory[]; free: boolean }) => void
+  onApply: (filters: { radiusKm: number; category: EventCategory[]; timeOfDay: TimeOfDay[]; free: boolean }) => void
 }
 
 function CloseIcon() {
@@ -31,9 +39,10 @@ function CloseIcon() {
   )
 }
 
-export default function FilterSheet({ open, onClose, radiusKm, category = [], free = false, onApply }: Props) {
+export default function FilterSheet({ open, onClose, radiusKm, category = [], timeOfDay = [], free = false, onApply }: Props) {
   const [localRadius, setLocalRadius] = useState(radiusKm)
   const [localCats, setLocalCats] = useState<EventCategory[]>(category)
+  const [localTod, setLocalTod] = useState<TimeOfDay[]>(timeOfDay)
   const [localFree, setLocalFree] = useState(free)
 
   if (!open) return null
@@ -44,8 +53,14 @@ export default function FilterSheet({ open, onClose, radiusKm, category = [], fr
     )
   }
 
+  function toggleTod(key: TimeOfDay) {
+    setLocalTod((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
+  }
+
   function handleApply() {
-    onApply({ radiusKm: localRadius, category: localCats, free: localFree })
+    onApply({ radiusKm: localRadius, category: localCats, timeOfDay: localTod, free: localFree })
     onClose()
   }
 
@@ -101,6 +116,27 @@ export default function FilterSheet({ open, onClose, radiusKm, category = [], fr
                   >
                     <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: cat.color }} />
                     {cat.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">orario</p>
+            <div className="flex gap-2">
+              {TIME_OPTIONS.map((opt) => {
+                const active = localTod.includes(opt.key)
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => toggleTod(opt.key)}
+                    className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-colors border ${
+                      active
+                        ? 'bg-accent-lo border-accent text-accent'
+                        : 'border-border text-bright hover:text-text'
+                    }`}
+                  >
+                    {opt.label}
                   </button>
                 )
               })}
