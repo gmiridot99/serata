@@ -95,6 +95,8 @@ export default function EventMap({
           const catColor = CATEGORY_COLORS[event.category] ?? CATEGORY_COLORS.other
           const catLabel = CATEGORY_LABELS[event.category] ?? event.category
 
+          const isDimmed = !!highlightedId && !isSelected
+
           return (
             <AdvancedMarker
               key={event.id}
@@ -117,7 +119,8 @@ export default function EventMap({
                     ? `0 10px 26px ${catColor}55, 0 0 0 4px ${catColor}26`
                     : '0 6px 16px rgba(0,0,0,0.55)',
                   transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-                  transition: 'all 0.15s ease',
+                  opacity: isDimmed ? 0.45 : 1,
+                  transition: 'all 0.15s ease, opacity 180ms ease',
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
                   backdropFilter: 'blur(8px)',

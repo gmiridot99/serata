@@ -11,13 +11,15 @@ import LocationChip from './LocationChip'
 import LocationOverlay from './LocationOverlay'
 import BottomNav from './BottomNav'
 import EventDetailModal from './EventDetailModal'
-import EventDetailPanel from './EventDetailPanel'
-import Sidebar from './Sidebar'
 import FilterSheet from './FilterSheet'
 import ModeToggle from './ModeToggle'
 import MapFAB from './MapFAB'
 import MapSheet from './MapSheet'
 import EventList from './EventList'
+import { haversineKm } from '@/lib/distance'
+import DesktopListPanel from './desktop/DesktopListPanel'
+import DesktopDetailPanel from './desktop/DesktopDetailPanel'
+import DesktopMapPanel from './desktop/DesktopMapPanel'
 
 function AppInner() {
   const {
@@ -38,6 +40,7 @@ function AppInner() {
   const [mapOpen, setMapOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const [freeOnly, setFreeOnly] = useState(false)
+  const [mapFullscreen, setMapFullscreen] = useState(false)
 
   useEffect(() => {
     if (geoStatus === 'denied' && !location) setLocationOpen(true)
@@ -153,65 +156,78 @@ function AppInner() {
         <MapFAB onClick={() => setMapOpen((o) => !o)} isOpen={mapOpen} />
       </div>
 
-      {/* ─── DESKTOP ─── */}
-      <div className="hidden md:flex h-full">
-        <Sidebar
-          cityName={location?.name}
-          radiusKm={filters.radiusKm}
-          activeDate={filters.date}
-          onDateChange={(date) => setFilters({ ...filters, date })}
-          activeCategories={activeCategories}
-          onCategoryChange={(cats) => setFilters({ ...filters, category: cats })}
-          onCityClick={() => setLocationOpen(true)}
-          free={freeOnly}
-          onFreeChange={setFreeOnly}
-        />
-
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          {/* Desktop topbar */}
-          <div className="shrink-0 flex items-center justify-between px-6 h-14 border-b border-border bg-bg z-20">
-            <LocationChip location={location} onClick={() => setLocationOpen(true)} />
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted tabular-nums">
-                {visibleEvents.length} {isVenueMode ? 'locali' : 'eventi'}
-              </span>
-              <ModeToggle mode={filters.mode} onChange={handleModeChange} />
-              <button
-                onClick={() => setFilterOpen((o) => !o)}
-                className="px-3 py-1.5 rounded-full border border-border text-[11px] font-medium text-bright hover:text-text transition-colors"
-              >
-                filtri
-              </button>
-            </div>
+      {/* ─── DESKTOP — split persistente: LEFT 460px | MAP flex ─── */}
+      <div className="hidden md:flex flex-col h-full">
+        {/* Header 60px */}
+        <header className="h-[60px] shrink-0 flex items-center gap-3 px-5 border-b border-border bg-bg z-20">
+          <span className="font-display font-black text-[20px] text-accent tracking-tight">serata</span>
+          <LocationChip location={location} onClick={() => setLocationOpen(true)} />
+          <div className="flex-1 flex justify-center">
+            <DateTabs
+              variant="pill"
+              value={filters.date}
+              onChange={(date) => setFilters({ ...filters, date })}
+              eventDates={eventDates}
+              location={location
+                ? { city: location.name, lat: location.lat, lng: location.lng, radiusKm: filters.radiusKm }
+                : undefined}
+            />
           </div>
+          <span className="text-xs text-muted tabular-nums shrink-0">
+            {visibleEvents.length} {isVenueMode ? 'locali' : 'serate'}
+          </span>
+          <ModeToggle mode={filters.mode} onChange={handleModeChange} />
+          <button
+            onClick={() => setFilterOpen((o) => !o)}
+            className="shrink-0 px-3 py-1.5 rounded-full border border-border text-[11px] font-medium text-bright hover:text-text transition-colors"
+          >
+            filtri
+          </button>
+        </header>
 
-          <main className="flex-1 overflow-y-auto px-6 py-4">
-            <div className="max-w-[720px] mx-auto">
+        {/* Split body */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* LEFT 460px — list OR detail */}
+          {!mapFullscreen && (
+            <div className="w-[460px] shrink-0 border-r border-border flex flex-col bg-bg overflow-hidden">
               {loading ? (
-                <div className="flex items-center justify-center py-16">
+                <div className="flex items-center justify-center h-full">
                   <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                 </div>
+              ) : selectedEvent ? (
+                <DesktopDetailPanel
+                  event={selectedEvent}
+                  onBack={() => setSelectedEvent(null)}
+                  eventIndex={visibleEvents.findIndex((e) => e.id === selectedEvent.id) + 1}
+                  eventTotal={visibleEvents.length}
+                  distanceKm={userLocation
+                    ? haversineKm(userLocation, { lat: selectedEvent.venue.lat, lng: selectedEvent.venue.lng })
+                    : undefined}
+                />
               ) : (
-                <EventList
+                <DesktopListPanel
                   events={visibleEvents}
                   highlightedId={highlightedId}
-                  onCardHover={setHighlightedId}
-                  onSelect={setSelectedEvent}
+                  onSelect={(ev) => { setSelectedEvent(ev); setMapFullscreen(false) }}
+                  onHover={setHighlightedId}
                   userLocation={userLocation}
+                  isVenueMode={isVenueMode}
                 />
               )}
             </div>
-          </main>
-        </div>
+          )}
 
-        <MapFAB onClick={() => setMapOpen((o) => !o)} isOpen={mapOpen} />
-
-        {selectedEvent && (
-          <EventDetailPanel
-            event={selectedEvent}
-            onClose={() => setSelectedEvent(null)}
+          {/* RIGHT — map always present */}
+          <DesktopMapPanel
+            events={visibleEvents}
+            city={location?.name}
+            highlightedId={selectedEvent?.id ?? highlightedId}
+            onSelect={(ev) => { setSelectedEvent(ev); setMapFullscreen(false) }}
+            isVenueMode={isVenueMode}
+            fullscreen={mapFullscreen}
+            onToggleFullscreen={() => setMapFullscreen((f) => !f)}
           />
-        )}
+        </div>
       </div>
 
       {/* ─── SHARED OVERLAYS ─── */}
