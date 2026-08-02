@@ -1,63 +1,53 @@
 # serata
 
-perché ogni volta che voglio uscire devo aprire maps, instagram, dice, e altri 3 siti prima di capire cosa succede stasera?
+**serata** aggregates events and venues from Google Maps and Ticketmaster into one map+list view, so I don't need five tabs open to figure out what's on tonight.
 
-**serata** aggrega eventi e locali in un'unica interfaccia — scegli la città, filtra per data e categoria, vedi tutto su mappa e lista. niente più tab aperte ovunque.
+## Why
 
-> progetto personale. sto sperimentando, non mi prendo troppo sul serio. se funziona bene, se no imparo comunque.
+Deciding what to do on a night out means checking Maps, Instagram, Dice, and a couple more sites before getting a real picture. This pulls events and venues into a single interface: pick a city, filter by date/category, see everything on a map and a list side by side.
 
----
+## What it does
 
-## cosa fa
+- Search events and venues in your city (or current location)
+- Filter by date, category (clubs, concerts, aperitivi, theatre...), distance, price
+- Venues mode: Google ratings, filter by stars (3+ / 4+ / 4.5+)
+- Open a venue → AI-generated recap of its reviews (vibe, noise level, average age, what it's good for)
+- Side-by-side list + map on desktop, mobile-first with bottom nav
+- Data from Google Maps, Ticketmaster, and other sources
 
-- cerca eventi e locali nella tua città (o dove sei)
-- filtra per data, categoria (club, concerti, aperitivi, teatro...), distanza, prezzo
-- modalità **venues**: locali con rating Google, filtro per stelle (3+ / 4+ / 4.5+)
-- apri un locale → AI genera un recap delle recensioni: vibe, rumorosità, età media, per cosa è adatto
-- vista lista + mappa affiancate su desktop
-- mobile first con bottom nav
-- dati da Google Maps, Ticketmaster e altri
-
-## screenshot
+## Screenshots
 
 | desktop | mobile |
 |---|---|
-| ![desktop lista+mappa](public/screenshots/Screenshot%202026-04-28%20222723.png) | ![mobile lista](public/screenshots/Screenshot%202026-04-28%20222912.png) |
-| ![desktop evento](public/screenshots/Screenshot%202026-04-28%20222855.png) | ![desktop londra](public/screenshots/Screenshot%202026-04-28%20223003.png) |
+| ![desktop list+map](public/screenshots/Screenshot%202026-04-28%20222723.png) | ![mobile list](public/screenshots/Screenshot%202026-04-28%20222912.png) |
+| ![desktop event](public/screenshots/Screenshot%202026-04-28%20222855.png) | ![desktop london](public/screenshots/Screenshot%202026-04-28%20223003.png) |
 
-## stack
+## Tech
 
-![Next.js](https://img.shields.io/badge/Next.js-black?style=flat&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
-![Google Maps](https://img.shields.io/badge/Google_Maps-4285F4?style=flat&logo=googlemaps&logoColor=white)
-![DeepSeek](https://img.shields.io/badge/DeepSeek_AI-4D6BFE?style=flat&logoColor=white)
+Next.js, TypeScript, Tailwind CSS, Google Maps/Places API, Ticketmaster API, DeepSeek for the AI review recaps.
 
-## run locale
+## Running it
 
 ```bash
 npm install
 npm run dev
 ```
 
-apri [http://localhost:3000](http://localhost:3000)
+open [http://localhost:3000](http://localhost:3000)
 
-serve un file `.env.local` con:
+needs a `.env.local` with:
 
 ```
 GOOGLE_PLACES_API_KEY=...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 TICKETMASTER_API_KEY=...
-DEEPSEEK_API_KEY=...       # per i recap AI dei locali
+DEEPSEEK_API_KEY=...       # for the AI venue recaps
 ```
 
-## roadmap (vibe)
+## Missing / would redo
 
-- [ ] più fonti dati (Instagram, Resident Advisor, siti locali...)
-- [ ] ricerca intelligente tipo "voglio qualcosa di tranquillo stasera"
-- [ ] notifiche per eventi nella tua zona
-- [ ] forse un giorno fuori dall'Italia, bo
+Coverage is still Italy-focused and depends entirely on how good Google Places/Ticketmaster data is for a given city — no manual/community source yet. No caching layer on the AI recap calls, so repeated lookups re-hit DeepSeek. If I kept going: more data sources (Instagram, Resident Advisor, local listings), smarter free-text search ("something chill tonight"), notifications for nearby events.
 
 ---
 
-fatto con claude code, un po' di vibecoding, e la frustrazione di dover aprire 5 app per decidere dove andare il sabato sera.
+Personal project, built with Claude Code.
